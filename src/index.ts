@@ -30,9 +30,10 @@ export async function startServer(): Promise<void> {
 }
 
 // If this file is being run directly, start the server
-if (require.main === module) {
+// if (import.meta.url === `file://${process.argv[1]}`) {
+  console.log(`startServer`);
   startServer().catch((error) => {
     console.error("Failed to start server:", error);
     process.exit(1);
   });
-}
+// }
