@@ -21,8 +21,13 @@
   - 插入图表：支持各类数据可视化图表
   - 插入流程图：支持流程图和思维导图
   - 插入公式：支持数学公式和科学符号
-  - 图表、流程图的内容识别
+- 图表、流程图的内容识别
 
+快速开始，详见[配置](#配置)部分：
+
+```bash
+npx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
+```
 
 ## 工作原理
 
@@ -32,6 +37,47 @@
 4. Cursor 将从飞书获取相关元数据并使用它来辅助编写代码。
 
 这个 MCP 服务器专为 Cursor 设计。在响应来自[飞书 API](https://open.feishu.cn/document/home/introduction-to-lark-open-platform/overview) 的内容之前，它会简化和转换响应，确保只向模型提供最相关的文档信息。
+## 安装
+
+### 使用 NPM 快速运行服务器
+
+你可以使用 NPM 快速运行服务器，无需安装或构建仓库：
+
+```bash
+npx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
+
+# 或
+pnpx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
+
+# 或
+yarn dlx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
+
+# 或
+bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
+```
+
+关于如何创建飞书应用和获取应用凭证的说明可以在[这里](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
+
+### 使用配置文件的工具的 JSON 配置
+
+许多工具如 Windsurf、Cline 和 [Claude Desktop](https://claude.ai/download) 使用配置文件来启动服务器。
+
+`feishu-mcp` 服务器可以通过在配置文件中添加以下内容来配置：
+
+```json
+{
+  "mcpServers": {
+    "feishu-mcp": {
+      "command": "npx",
+      "args": ["-y", "feishu-mcp", "--stdio"],
+      "env": {
+        "FEISHU_APP_ID": "<你的飞书应用ID>",
+        "FEISHU_APP_SECRET": "<你的飞书应用密钥>"
+      }
+    }
+  }
+}
+```
 
 ### 从本地源代码运行服务器
 
