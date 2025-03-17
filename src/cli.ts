@@ -2,7 +2,7 @@
 
 import { resolve } from "path";
 import { config } from "dotenv";
-import { startServer } from "./index";
+import { startServer } from "./index.js";
 
 // Load .env from the current working directory
 config({ path: resolve(process.cwd(), ".env") });

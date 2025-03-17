@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { Logger } from "../server";
+import { Logger } from "../server.js";
 
 export interface FeishuError {
   status: number;

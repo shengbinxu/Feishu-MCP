@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { FeishuService } from "./services/feishu";
+import { FeishuService } from "./services/feishu.js";
 import express, { Request, Response } from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { IncomingMessage, ServerResponse } from "http";
@@ -44,7 +44,6 @@ export class FeishuMcpServer {
   }
 
   private registerTools(): void {
-    // 添加创建飞书文档工具
     // 添加创建飞书文档工具
     this.server.tool(
       "create_feishu_doc",

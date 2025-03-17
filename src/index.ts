@@ -1,6 +1,8 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { FeishuMcpServer } from "./server";
-import { getServerConfig } from "./config";
+import { FeishuMcpServer } from "./server.js";
+import { getServerConfig } from "./config.js";
+import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 
 export async function startServer(): Promise<void> {
   // Check if we're running in stdio mode (e.g., via CLI)
@@ -20,6 +22,8 @@ export async function startServer(): Promise<void> {
 
   const server = new FeishuMcpServer(feishuConfig);
 
+  console.log(`isStdioMode:${isStdioMode}`)
+
   if (isStdioMode) {
     const transport = new StdioServerTransport();
     await server.connect(transport);
@@ -29,11 +33,18 @@ export async function startServer(): Promise<void> {
   }
 }
 
-// If this file is being run directly, start the server
-// if (import.meta.url === `file://${process.argv[1]}`) {
+// 跨平台兼容的方式检查是否直接运行
+const currentFilePath = fileURLToPath(import.meta.url);
+const executedFilePath = resolve(process.argv[1]);
+
+console.log(`meta.url:${currentFilePath}  argv:${executedFilePath}` );
+
+if (currentFilePath === executedFilePath) {
   console.log(`startServer`);
   startServer().catch((error) => {
-    console.error("Failed to start server:", error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   });
-// }
+} else {
+  console.log(`not startServer`);
+}
