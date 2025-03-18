@@ -56,6 +56,8 @@ yarn dlx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<
 bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
 ```
 
+已发布到smithery平台，可访问:https://smithery.ai/server/@cso1z/feishu-mcp 
+
 关于如何创建飞书应用和获取应用凭证的说明可以在[这里](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
 
 ### 使用配置文件的工具的 JSON 配置
