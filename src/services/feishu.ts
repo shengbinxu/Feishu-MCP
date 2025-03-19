@@ -388,8 +388,122 @@ export class FeishuService {
     }
   }
 
+  // 创建文本块内容
+  createTextBlockContent(textContents: Array<{text: string, style?: any}>, align: number = 1): any {
+    return {
+      block_type: 2, // 2表示文本块
+      text: {
+        elements: textContents.map(content => ({
+          text_run: {
+            content: content.text,
+            text_element_style: content.style || {}
+          }
+        })),
+        style: {
+          align: align // 1 居左，2 居中，3 居右
+        }
+      }
+    };
+  }
+
+  // 创建代码块内容
+  createCodeBlockContent(code: string, language: number = 0, wrap: boolean = false): any {
+    return {
+      block_type: 14, // 14表示代码块
+      code: {
+        elements: [
+          {
+            text_run: {
+              content: code,
+              text_element_style: {
+                bold: false,
+                inline_code: false,
+                italic: false,
+                strikethrough: false,
+                underline: false
+              }
+            }
+          }
+        ],
+        style: {
+          language: language,
+          wrap: wrap
+        }
+      }
+    };
+  }
+
+  // 创建标题块内容
+  createHeadingBlockContent(text: string, level: number = 1, align: number = 1): any {
+    // 确保标题级别在有效范围内（1-9）
+    const safeLevel = Math.max(1, Math.min(9, level));
+
+    // 根据标题级别设置block_type和对应的属性名
+    // 飞书API中，一级标题的block_type为3，二级标题为4，以此类推
+    const blockType = 2 + safeLevel; // 一级标题为3，二级标题为4，以此类推
+    const headingKey = `heading${safeLevel}`; // heading1, heading2, ...
+
+    // 构建块内容
+    const blockContent: any = {
+      block_type: blockType
+    };
+
+    // 设置对应级别的标题属性
+    blockContent[headingKey] = {
+      elements: [
+        {
+          text_run: {
+            content: text,
+            text_element_style: {}
+          }
+        }
+      ],
+      style: {
+        align: align,
+        folded: false
+      }
+    };
+
+    return blockContent;
+  }
+
+  // 批量创建文档块
+  async createDocumentBlocks(documentId: string, parentBlockId: string, blockContents: any[], index: number = 0): Promise<any> {
+    try {
+      const docId = this.extractDocIdFromUrl(documentId);
+      if (!docId) {
+        throw new Error(`无效的文档ID: ${documentId}`);
+      }
+
+      Logger.log(`开始批量创建文档块，文档ID: ${docId}，父块ID: ${parentBlockId}，块数量: ${blockContents.length}，插入位置: ${index}`);
+
+      const endpoint = `/docx/v1/documents/${docId}/blocks/${parentBlockId}/children?document_revision_id=-1`;
+      Logger.log(`准备请求API端点: ${endpoint}`);
+
+      const data = {
+        children: blockContents,
+        index: index
+      };
+
+      Logger.log(`请求数据: ${JSON.stringify(data, null, 2)}`);
+
+      const response = await this.request<{code: number, msg: string, data: any}>(endpoint, 'POST', data);
+
+      if (response.code !== 0) {
+        throw new Error(`批量创建文档块失败: ${response.msg}`);
+      }
+
+      Logger.log(`批量文档块创建成功: ${JSON.stringify(response.data, null, 2)}`);
+
+      return response.data;
+    } catch (error) {
+      Logger.error(`批量创建文档块失败:`, error);
+      throw error;
+    }
+  }
+
   // 创建标题块
-  async createHeadingBlock(documentId: string, parentBlockId: string, text: string, level: number = 1, index: number = 0): Promise<any> {
+  async createHeadingBlock(documentId: string, parentBlockId: string, text: string, level: number = 1, index: number = 0, align: number = 1): Promise<any> {
     try {
       const docId = this.extractDocIdFromUrl(documentId);
       if (!docId) {
@@ -422,7 +536,7 @@ export class FeishuService {
           }
         ],
         style: {
-          align: 1,
+          align: align,
           folded: false
         }
       };
