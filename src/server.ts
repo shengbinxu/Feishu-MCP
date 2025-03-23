@@ -69,7 +69,7 @@ function formatErrorMessage(error: any): string {
         if (error.error && error.error.field_violations && error.error.field_violations.length > 0) {
           const violations = error.error.field_violations;
           errorMsg += '\n字段验证错误:';
-          violations.forEach((violation: any, index: number) => {
+          violations.forEach((violation: any) => {
             let detail = `\n - ${violation.field}`;
             if (violation.description) {
               detail += `: ${violation.description}`;
@@ -105,7 +105,7 @@ function formatErrorMessage(error: any): string {
           // 处理错误嵌套在error对象中的情况
           const violations = error.error.field_violations;
           let errorMsg = '字段验证错误:';
-          violations.forEach((violation: any, index: number) => {
+          violations.forEach((violation: any) => {
             let detail = `\n - ${violation.field}`;
             if (violation.description) {
               detail += `: ${violation.description}`;
