@@ -57,6 +57,9 @@ bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你�
 ```
 
 已发布到smithery平台，可访问:https://smithery.ai/server/@cso1z/feishu-mcp 
+可以直接使用:`npx -y @smithery/cli@latest install @cso1z/feishu-mcp --client cursor --config "{\"port\":3335,\"feishuAppId\":\"cli_a7*****ac79100c\",\"feishuAppSecret\":\"4spDkm3qA*****NMmuFj6JWa\"}"`
+
+
 
 关于如何创建飞书应用和获取应用凭证的说明可以在[这里](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
 

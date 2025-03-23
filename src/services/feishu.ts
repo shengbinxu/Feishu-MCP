@@ -4,6 +4,7 @@ import { Logger } from "../server.js";
 export interface FeishuError {
   status: number;
   err: string;
+  apiError?: any;
 }
 
 export interface FeishuDocContent {
@@ -74,6 +75,7 @@ export class FeishuService {
         throw {
           status: response.status,
           err: response.data.msg || "Unknown error",
+          apiError: response.data
         } as FeishuError;
       }
 
@@ -93,6 +95,7 @@ export class FeishuService {
         throw {
           status: error.response.status,
           err: error.response.data?.msg || "Unknown error",
+          apiError: error.response.data
         } as FeishuError;
       }
       Logger.error('获取访问令牌时发生未知错误:', error);
@@ -139,6 +142,7 @@ export class FeishuService {
         throw {
           status: error.response.status,
           err: error.response.data?.msg || "Unknown error",
+          apiError: error.response.data
         } as FeishuError;
       }
       Logger.error('发送请求时发生未知错误:', error);
