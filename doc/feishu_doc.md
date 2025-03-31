@@ -224,3 +224,142 @@ curl -i -X POST 'https://open.feishu.cn/open-apis/docx/v1/documents/<document_id
 
 > 注：代码块语言类型对照表：
 > 1: PlainText, 2: ABAP, 3: Ada, 4: Apache, 5: Apex, 6: Assembly Language, 7: Bash, 8: CSharp, 9: C++, 10: C, 11: COBOL, 12: CSS, 13: CoffeeScript, 14: D, 15: Dart, 16: Delphi, 17: Django, 18: Dockerfile, 19: Erlang, 20: Fortran, 22: Go, 23: Groovy, 24: HTML, 25: HTMLBars, 26: HTTP, 27: Haskell, 28: JSON, 29: Java, 30: JavaScript, 31: Julia, 32: Kotlin, 33: LateX, 34: Lisp, 36: Lua, 37: MATLAB, 38: Makefile, 39: Markdown, 40: Nginx, 41: Objective-C, 43: PHP, 44: Perl, 46: Power Shell, 47: Prolog, 48: ProtoBuf, 49: Python, 50: R, 52: Ruby, 53: Rust, 54: SAS, 55: SCSS, 56: SQL, 57: Scala, 58: Scheme, 60: Shell, 61: Swift, 62: Thrift, 63: TypeScript, 64: VBScript, 65: Visual Basic, 66: XML, 67: YAML, 68: CMake, 69: Diff, 70: Gherkin, 71: GraphQL, 72: OpenGL Shading Language, 73: Properties, 74: Solidity, 75: TOML
+
+## 7. 更新块文本内容
+* 请求
+```
+curl -i -X PATCH 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/blocks/RXZTdBl6qoL5wzxSyuRcMHFnn4d?document_revision_id=-1' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer t-g1043vjC5MA5A6P2TONFYSFS553GLB3YGNGH3E66' \
+-d '{
+	"update_text_elements": {
+		"elements": [
+			{
+				"text_run": {
+					"content": "测试",
+					"text_element_style": {
+						"background_color": 2,
+						"bold": true,
+						"italic": true,
+						"strikethrough": true,
+						"text_color": 2,
+						"underline": true
+					}
+				}
+			},
+			{
+				"text_run": {
+					"content": "文本",
+					"text_element_style": {
+						"italic": true
+					}
+				}
+			}
+		]
+	}
+}'
+```
+* 返回数据：
+```
+{
+  "code": 0,
+  "data": {
+    "block": {
+      "block_id": "SJi5dloCxoVRiWxq6fgcd89znyf",
+      "block_type": 14,
+      "code": {
+        "elements": [
+          {
+            "text_run": {
+              "content": "测试",
+              "text_element_style": {
+                "background_color": 2,
+                "bold": true,
+                "inline_code": false,
+                "italic": true,
+                "strikethrough": true,
+                "text_color": 2,
+                "underline": true
+              }
+            }
+          },
+          {
+            "text_run": {
+              "content": "文本",
+              "text_element_style": {
+                "bold": false,
+                "inline_code": false,
+                "italic": true,
+                "strikethrough": false,
+                "underline": false
+              }
+            }
+          }
+        ],
+        "style": {
+          "wrap": true
+        }
+      },
+      "parent_id": "Jg28dOoZ0ofnMdxcfDrcwJE6n0b"
+    },
+    "client_token": "881fafb3-3ff4-4181-900d-0ebb7f104627",
+    "document_revision_id": 20
+  },
+  "msg": "success"
+}
+```
+
+## 8.获取块内容
+* 请求
+```
+curl -i -X GET 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/blocks/doxcn4e6moAlWwQL4eevxgQDAIh?document_revision_id=-1' \
+-H 'Authorization: Bearer t-g1043vjC5MA5A6P2TONFYSFS553GLB3YGNGH3E66'
+```
+* 返回结果
+```
+{
+  "code": 0,
+  "data": {
+    "block": {
+      "block_id": "doxcn4e6moAlWwQL4eevxgQDAIh",
+      "block_type": 4,
+      "heading2": {
+        "elements": [
+          {
+            "text_run": {
+              "content": "测试",
+              "text_element_style": {
+                "background_color": 2,
+                "bold": true,
+                "inline_code": false,
+                "italic": true,
+                "strikethrough": true,
+                "text_color": 2,
+                "underline": true
+              }
+            }
+          },
+          {
+            "text_run": {
+              "content": "文本",
+              "text_element_style": {
+                "bold": false,
+                "inline_code": false,
+                "italic": true,
+                "strikethrough": false,
+                "underline": false
+              }
+            }
+          }
+        ],
+        "style": {
+          "align": 1,
+          "folded": false
+        }
+      },
+      "parent_id": "Jg28dOoZ0ofnMdxcfDrcwJE6n0b"
+    }
+  },
+  "msg": "success"
+}
+```

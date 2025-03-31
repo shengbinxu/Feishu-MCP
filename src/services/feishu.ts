@@ -7,6 +7,9 @@ export interface FeishuError {
   apiError?: any;
 }
 
+/**
+ * @deprecated 目前未使用，为将来的扩展保留。如需使用请适当更新它
+ */
 export interface FeishuDocContent {
   title: string;
   content: any;
@@ -41,6 +44,41 @@ export class FeishuService {
     this.appSecret = appSecret;
   }
 
+  // 包装和重新抛出错误的辅助方法
+  private wrapAndThrowError(message: string, originalError: any): never {
+    Logger.error(`${message}:`, originalError);
+    
+    // 如果原始错误已经是FeishuError格式，直接重新抛出
+    if (originalError && typeof originalError === 'object' && 'status' in originalError && 'err' in originalError) {
+      throw originalError;
+    }
+    
+    // 如果是AxiosError，抽取有用信息
+    if (originalError instanceof AxiosError && originalError.response) {
+      throw {
+        status: originalError.response.status,
+        err: `${message}: ${originalError.response.data?.msg || originalError.message || 'Unknown error'}`,
+        apiError: originalError.response.data
+      } as FeishuError;
+    }
+    
+    // 其他类型的错误，包装为一致的格式
+    if (originalError instanceof Error) {
+      throw {
+        status: 500,
+        err: `${message}: ${originalError.message}`,
+        apiError: originalError
+      } as FeishuError;
+    }
+    
+    // 未知错误类型
+    throw {
+      status: 500,
+      err: message,
+      apiError: originalError
+    } as FeishuError;
+  }
+
   private isTokenExpired(): boolean {
     if (!this.accessToken || !this.tokenExpireTime) return true;
     return Date.now() >= this.tokenExpireTime;
@@ -58,15 +96,15 @@ export class FeishuService {
         app_id: this.appId,
         app_secret: this.appSecret,
       };
-      
+
       Logger.log('开始获取新的访问令牌...');
       Logger.log(`请求URL: ${url}`);
       Logger.log(`请求方法: POST`);
       Logger.log(`请求数据: ${JSON.stringify(requestData, null, 2)}`);
-      
+
       const response = await axios.post(url, requestData);
 
-      Logger.log(`响应状态码: ${response.status}`);
+      Logger.log(`响应状态码: ${response?.status}`);
       Logger.log(`响应头: ${JSON.stringify(response.headers, null, 2)}`);
       Logger.log(`响应数据: ${JSON.stringify(response.data, null, 2)}`);
 
@@ -179,16 +217,7 @@ export class FeishuService {
 
       return docInfo;
     } catch (error) {
-      Logger.error(`创建文档失败:`, error);
-      if (error instanceof AxiosError) {
-        Logger.error(`请求URL: ${error.config?.url}`);
-        Logger.error(`请求方法: ${error.config?.method?.toUpperCase()}`);
-        Logger.error(`状态码: ${error.response?.status}`);
-        if (error.response?.data) {
-          Logger.error(`错误详情: ${JSON.stringify(error.response.data, null, 2)}`);
-        }
-      }
-      throw error;
+      this.wrapAndThrowError('创建文档失败', error);
     }
   }
 
@@ -442,6 +471,10 @@ export class FeishuService {
     // 确保标题级别在有效范围内（1-9）
     const safeLevel = Math.max(1, Math.min(9, level));
 
+    // 确保align值在合法范围内（1-3）
+    // 1表示居左，2表示居中，3表示居右
+    const safeAlign = (align === 1 || align === 2 || align === 3) ? align : 1;
+
     // 根据标题级别设置block_type和对应的属性名
     // 飞书API中，一级标题的block_type为3，二级标题为4，以此类推
     const blockType = 2 + safeLevel; // 一级标题为3，二级标题为4，以此类推
@@ -463,7 +496,7 @@ export class FeishuService {
         }
       ],
       style: {
-        align: align,
+        align: safeAlign,
         folded: false
       }
     };
@@ -514,7 +547,11 @@ export class FeishuService {
         throw new Error(`无效的文档ID: ${documentId}`);
       }
 
-      Logger.log(`开始创建标题块，文档ID: ${docId}，父块ID: ${parentBlockId}，标题级别: ${level}，插入位置: ${index}`);
+      // 确保align值在合法范围内（1-3）
+      // 1表示居左，2表示居中，3表示居右
+      const safeAlign = (align === 1 || align === 2 || align === 3) ? align : 1;
+
+      Logger.log(`开始创建标题块，文档ID: ${docId}，父块ID: ${parentBlockId}，标题级别: ${level}，对齐方式: ${safeAlign}，插入位置: ${index}`);
 
       // 确保标题级别在有效范围内（1-9）
       const safeLevel = Math.max(1, Math.min(9, level));
@@ -540,7 +577,7 @@ export class FeishuService {
           }
         ],
         style: {
-          align: align,
+          align: safeAlign,
           folded: false
         }
       };
@@ -548,8 +585,77 @@ export class FeishuService {
       Logger.log(`标题块内容: ${JSON.stringify(blockContent, null, 2)}`);
       return await this.createDocumentBlock(documentId, parentBlockId, blockContent, index);
     } catch (error) {
-      Logger.error(`创建标题块失败:`, error);
-      throw error;
+      this.wrapAndThrowError(`创建标题块失败`, error);
+    }
+  }
+
+  // 获取块内容
+  async getBlockContent(documentId: string, blockId: string): Promise<any> {
+    try {
+      const docId = this.extractDocIdFromUrl(documentId);
+      if (!docId) {
+        throw new Error(`无效的文档ID: ${documentId}`);
+      }
+
+      Logger.log(`开始获取块内容，文档ID: ${docId}，块ID: ${blockId}`);
+
+      const endpoint = `/docx/v1/documents/${docId}/blocks/${blockId}?document_revision_id=-1`;
+      Logger.log(`准备请求API端点: ${endpoint}`);
+
+      const response = await this.request<{code: number, msg: string, data?: {block: any}}>(endpoint);
+
+      if (response.code !== 0) {
+        throw new Error(`获取块内容失败: ${response.msg}`);
+      }
+
+      const blockContent = response.data?.block;
+      Logger.log(`块内容获取成功: ${JSON.stringify(blockContent, null, 2)}`);
+
+      return blockContent;
+    } catch (error) {
+      this.wrapAndThrowError(`获取块内容失败`, error);
+    }
+  }
+
+  // 更新块文本内容
+  async updateBlockTextContent(documentId: string, blockId: string, textElements: Array<{text: string, style?: any}>): Promise<any> {
+    try {
+      const docId = this.extractDocIdFromUrl(documentId);
+      if (!docId) {
+        throw new Error(`无效的文档ID: ${documentId}`);
+      }
+
+      Logger.log(`开始更新块文本内容，文档ID: ${docId}，块ID: ${blockId}`);
+
+      const endpoint = `/docx/v1/documents/${docId}/blocks/${blockId}?document_revision_id=-1`;
+      Logger.log(`准备请求API端点: ${endpoint}`);
+
+      const elements = textElements.map(item => ({
+        text_run: {
+          content: item.text,
+          text_element_style: item.style || {}
+        }
+      }));
+
+      const data = {
+        update_text_elements: {
+          elements: elements
+        }
+      };
+
+      Logger.log(`请求数据: ${JSON.stringify(data, null, 2)}`);
+
+      const response = await this.request<{code: number, msg: string, data: any}>(endpoint, 'PATCH', data);
+
+      if (response.code !== 0) {
+        throw new Error(`更新块文本内容失败: ${response.msg}`);
+      }
+
+      Logger.log(`块文本内容更新成功: ${JSON.stringify(response.data, null, 2)}`);
+
+      return response.data;
+    } catch (error) {
+      this.wrapAndThrowError(`更新块文本内容失败`, error);
     }
   }
 
