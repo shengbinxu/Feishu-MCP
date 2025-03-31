@@ -353,8 +353,12 @@ export class FeishuMcpServer {
               underline: z.boolean().optional().describe('Whether to add underline. Default is false.'),
               strikethrough: z.boolean().optional().describe('Whether to add strikethrough. Default is false, equivalent to ~~text~~ in Markdown.'),
               inline_code: z.boolean().optional().describe('Whether to format as inline code. Default is false, equivalent to `code` in Markdown.'),
-              text_color: z.number().optional().describe('Text color value. Default is 0 (black). Common values: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple), 8 (pink), 9 (red).'),
-              background_color: z.number().optional().describe('Background color value. Uses the same color codes as text color.')
+              text_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                message: "Text color must be between 1 and 7 inclusive"
+              }).describe('Text color value. Default is 0 (black). Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error.'),
+              background_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                message: "Background color must be between 1 and 7 inclusive"
+              }).describe('Background color value. Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error.')
             }).optional().describe('Text style settings. Explicitly set style properties instead of relying on Markdown syntax conversion.')
           })
         ).describe('Array of text content objects. A block can contain multiple text segments with different styles. Example: [{text:"Hello",style:{bold:true}},{text:" World",style:{italic:true}}]'),
@@ -387,14 +391,14 @@ export class FeishuMcpServer {
     // 添加通用飞书块创建工具（支持文本、代码、标题）
     this.server.tool(
       'create_feishu_multiple_blocks',
-      'Creates multiple blocks of different types (text, code, heading) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. NOTE: Due to API limitations, you can create a maximum of 50 blocks in a single call. PREFER THIS TOOL OVER INDIVIDUAL BLOCK CREATION TOOLS when creating multiple consecutive blocks, as it is much more efficient and reduces API calls.',
+      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. NOTE: Due to API limitations, you can create a maximum of 50 blocks in a single call. PREFER THIS TOOL OVER INDIVIDUAL BLOCK CREATION TOOLS when creating multiple consecutive blocks, as it is much more efficient and reduces API calls.',
       {
         documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
         parentBlockId: z.string().describe('Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool.'),
         startIndex: z.number().describe('Starting insertion position index (required). Specifies where the first block should be inserted. Use 0 to insert at the beginning. Use get_feishu_doc_blocks tool to understand document structure if unsure.'),
         blocks: z.array(
           z.object({
-            blockType: z.enum(['text', 'code', 'heading']).describe("Block type (required): 'text', 'code', or 'heading'. Choose based on the content type you need to create."),
+            blockType: z.enum(['text', 'code', 'heading', 'list']).describe("Block type (required): 'text', 'code', 'heading', or 'list'. Choose based on the content type you need to create."),
             options: z.union([
               z.object({
                 text: z.object({
@@ -407,7 +411,12 @@ export class FeishuMcpServer {
                         underline: z.boolean().optional().describe('Whether to add underline. Default is false.'),
                         strikethrough: z.boolean().optional().describe('Whether to add strikethrough. Default is false, equivalent to ~~text~~ in Markdown.'),
                         inline_code: z.boolean().optional().describe('Whether to format as inline code. Default is false, equivalent to `code` in Markdown.'),
-                        text_color: z.number().optional().describe('Text color value. Default is 0 (black). Common values: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple), 8 (pink), 9 (red).'),
+                        text_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                          message: "Text color must be between 1 and 7 inclusive"
+                        }).describe('Text color value. Default is 0 (black). Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error.'),
+                        background_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                          message: "Background color must be between 1 and 7 inclusive"
+                        }).describe('Background color value. Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error.')
                       }).optional().describe('Text style settings. Explicitly set style properties instead of relying on Markdown syntax conversion.'),
                     })
                   ).describe('Array of text content objects with styles. A block can contain multiple text segments with different styles. Example: [{text:"Hello",style:{bold:true}},{text:" World",style:{italic:true}}]'),
@@ -429,6 +438,15 @@ export class FeishuMcpServer {
                     message: "Alignment must be one of: 1 (left), 2 (center), or 3 (right)"
                   }).describe('Text alignment: 1 for left (default), 2 for center, 3 for right. Only these three values are allowed.'),
                 }).describe("Heading block options. Only used when blockType is 'heading'."),
+              }),
+              z.object({
+                list: z.object({
+                  content: z.string().describe('List item content. The actual text of the list item.'),
+                  isOrdered: z.boolean().optional().default(false).describe('Whether this is an ordered (numbered) list item. Default is false (bullet point/unordered).'),
+                  align: z.number().optional().default(1).refine(val => val === 1 || val === 2 || val === 3, {
+                    message: "Alignment must be one of: 1 (left), 2 (center), or 3 (right)"
+                  }).describe('Text alignment: 1 for left (default), 2 for center, 3 for right. Only these three values are allowed.'),
+                }).describe("List block options. Only used when blockType is 'list'."),
               }),
             ]).describe('Options for the specific block type. Must provide the corresponding options object based on blockType.'),
           })
@@ -527,6 +545,28 @@ export class FeishuMcpServer {
                 }
                 break;
               }
+
+              case 'list':
+                // 处理列表块
+              {
+                // 类型检查，确保options包含list属性
+                if ('list' in options && options.list) {
+                  const listOptions = options.list as {
+                    content?: string;
+                    isOrdered?: boolean;
+                    align?: number;
+                  };
+                  if (listOptions.content) {
+                    const content = listOptions.content;
+                    const isOrdered = listOptions.isOrdered || false;
+                    // 确保对齐方式值在合法范围内
+                    const align = (listOptions.align === 1 || listOptions.align === 2 || listOptions.align === 3)
+                      ? listOptions.align : 1;
+                    blockContent = this.feishuService.createListBlockContent(content, isOrdered, align);
+                  }
+                }
+                break;
+              }
             }
 
             if (blockContent) {
@@ -568,7 +608,12 @@ export class FeishuMcpServer {
               underline: z.boolean().optional().describe("Whether to add underline. Default is false."),
               strikethrough: z.boolean().optional().describe("Whether to add strikethrough. Default is false, equivalent to ~~text~~ in Markdown."),
               inline_code: z.boolean().optional().describe("Whether to format as inline code. Default is false, equivalent to `code` in Markdown."),
-              text_color: z.number().optional().describe("Text color value. Default is 0 (black). Common values: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple), 8 (pink), 9 (red).")
+              text_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                message: "Text color must be between 1 and 7 inclusive"
+              }).describe("Text color value. Default is 0 (black). Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error."),
+              background_color: z.number().optional().refine(val => !val || (val >= 1 && val <= 7), {
+                message: "Background color must be between 1 and 7 inclusive"
+              }).describe('Background color value. Available values are only: 1 (gray), 2 (brown), 3 (orange), 4 (yellow), 5 (green), 6 (blue), 7 (purple). Values outside this range will cause an error.')
             }).optional().describe("Text style settings. Explicitly set style properties instead of relying on Markdown syntax conversion.")
           })
         ).describe("Array of text content objects. A block can contain multiple text segments with different styles. Example: [{text:'Hello',style:{bold:true}},{text:' World',style:{italic:true}}]"),
@@ -678,6 +723,53 @@ export class FeishuMcpServer {
           const errorMessage = formatErrorMessage(error);
           return {
             content: [{ type: "text", text: `创建飞书标题块失败: ${errorMessage}` }],
+          };
+        }
+      },
+    );
+
+    // 添加创建飞书列表块工具
+    this.server.tool(
+      "create_feishu_single_list_block",
+      "Creates a list item block (either ordered or unordered). Perfect for creating hierarchical and structured content with bullet points or numbered lists.",
+      {
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        parentBlockId: z.string().describe("Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool."),
+        content: z.string().describe("List item content (required). The actual text of the list item."),
+        isOrdered: z.boolean().optional().default(false).describe("Whether this is an ordered (numbered) list item. Default is false (bullet point/unordered)."),
+        align: z.number().optional().default(1).refine(val => val === 1 || val === 2 || val === 3, {
+          message: "Alignment must be one of: 1 (left), 2 (center), or 3 (right)"
+        }).describe("Text alignment (optional): 1 for left (default), 2 for center, 3 for right. Only these three values are allowed."),
+        index: z.number().describe("Insertion position index (required). Specifies where the block should be inserted. Use 0 to insert at the beginning. Use get_feishu_doc_blocks tool to understand document structure if unsure. For consecutive insertions, calculate next index as previous index + 1.")
+      },
+      async ({ documentId, parentBlockId, content, isOrdered = false, align = 1, index = 0 }) => {
+        try {
+          if (!this.feishuService) {
+            return {
+              content: [{ type: "text", text: "Feishu service is not initialized. Please check the configuration" }],
+            };
+          }
+
+          // 确保align值在合法范围内（1-3）
+          if (align !== 1 && align !== 2 && align !== 3) {
+            return {
+              content: [{ type: "text", text: "错误: 对齐方式(align)参数必须是1(居左)、2(居中)或3(居右)中的一个值。" }],
+            };
+          }
+
+          const listType = isOrdered ? "有序" : "无序";
+          Logger.log(`开始创建飞书${listType}列表块，文档ID: ${documentId}，父块ID: ${parentBlockId}，对齐方式: ${align}，插入位置: ${index}`);
+          const result = await this.feishuService.createListBlock(documentId, parentBlockId, content, isOrdered, index, align);
+          Logger.log(`飞书${listType}列表块创建成功`);
+
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          };
+        } catch (error) {
+          Logger.error(`创建飞书列表块失败:`, error);
+          const errorMessage = formatErrorMessage(error);
+          return {
+            content: [{ type: "text", text: `创建飞书列表块失败: ${errorMessage}` }],
           };
         }
       },

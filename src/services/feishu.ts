@@ -659,6 +659,63 @@ export class FeishuService {
     }
   }
 
+  // 创建列表块内容（有序或无序）
+  createListBlockContent(text: string, isOrdered: boolean = false, align: number = 1): any {
+    // 确保 align 值在合法范围内（1-3）
+    const safeAlign = (align === 1 || align === 2 || align === 3) ? align : 1;
+
+    // 有序列表是 block_type: 13，无序列表是 block_type: 12
+    const blockType = isOrdered ? 13 : 12;
+    const propertyKey = isOrdered ? "ordered" : "bullet";
+
+    // 构建块内容
+    const blockContent: any = {
+      block_type: blockType
+    };
+
+    // 设置列表属性
+    blockContent[propertyKey] = {
+      elements: [
+        {
+          text_run: {
+            content: text,
+            text_element_style: {}
+          }
+        }
+      ],
+      style: {
+        align: safeAlign,
+        folded: false
+      }
+    };
+
+    return blockContent;
+  }
+
+  // 创建列表块（有序或无序）
+  async createListBlock(documentId: string, parentBlockId: string, text: string, isOrdered: boolean = false, index: number = 0, align: number = 1): Promise<any> {
+    try {
+      const docId = this.extractDocIdFromUrl(documentId);
+      if (!docId) {
+        throw new Error(`无效的文档ID: ${documentId}`);
+      }
+
+      // 确保align值在合法范围内（1-3）
+      const safeAlign = (align === 1 || align === 2 || align === 3) ? align : 1;
+      const listType = isOrdered ? "有序" : "无序";
+
+      Logger.log(`开始创建${listType}列表块，文档ID: ${docId}，父块ID: ${parentBlockId}，对齐方式: ${safeAlign}，插入位置: ${index}`);
+
+      // 创建列表块内容
+      const blockContent = this.createListBlockContent(text, isOrdered, safeAlign);
+
+      Logger.log(`列表块内容: ${JSON.stringify(blockContent, null, 2)}`);
+      return await this.createDocumentBlock(documentId, parentBlockId, blockContent, index);
+    } catch (error) {
+      this.wrapAndThrowError(`创建${isOrdered ? "有序" : "无序"}列表块失败`, error);
+    }
+  }
+
   private extractDocIdFromUrl(url: string): string | null {
     // 处理飞书文档 URL，提取文档 ID
     // 支持多种URL格式

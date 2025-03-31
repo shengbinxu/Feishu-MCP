@@ -363,3 +363,151 @@ curl -i -X GET 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofnM
   "msg": "success"
 }
 ```
+
+## 9. 创建无序列表块
+* 请求参数：
+```
+curl -i -X POST 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/blocks/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/children?document_revision_id=-1' \
+-H 'Authorization: Bearer t-g1043vjC5MA5A6P2TONFYSFS553GLB3YGNGH3E66' \
+-H 'Content-Type: application/json' \
+-d '{
+	"children": [
+		{
+			"block_type": 12,
+			"bullet": {
+				"elements": [
+					{
+						"text_run": {
+							"content": "无序列表二",
+							"text_element_style": {
+								"bold": false,
+								"inline_code": false,
+								"italic": false,
+								"strikethrough": false,
+								"underline": false
+							}
+						}
+					}
+				],
+				"style": {
+					"align": 1,
+					"folded": false
+				}
+			}
+		}
+	],
+	"index": 0
+}'
+```
+* 返回数据
+```
+{
+  "code": 0,
+  "data": {
+    "children": [
+      {
+        "block_id": "doxcnogvtkjGJwdAH9ZNbI7mCoh",
+        "block_type": 12,
+        "bullet": {
+          "elements": [
+            {
+              "text_run": {
+                "content": "无序列表二",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": false,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            }
+          ],
+          "style": {
+            "align": 1,
+            "folded": false
+          }
+        },
+        "parent_id": "Jg28dOoZ0ofnMdxcfDrcwJE6n0b"
+      }
+    ],
+    "client_token": "27625ea1-8c77-4bca-9d2f-f6a5c3d9fcb6",
+    "document_revision_id": 67
+  },
+  "msg": "success"
+}
+```
+
+## 10.创建有无列表块
+* 请求参数
+```
+curl -i -X POST 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/blocks/Jg28dOoZ0ofnMdxcfDrcwJE6n0b/children?document_revision_id=-1' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer t-g1043vjC5MA5A6P2TONFYSFS553GLB3YGNGH3E66' \
+-d '{
+	"children": [
+		{
+			"block_type": 13,
+			"ordered": {
+				"elements": [
+					{
+						"text_run": {
+							"content": "无序列表二",
+							"text_element_style": {
+								"bold": false,
+								"inline_code": false,
+								"italic": false,
+								"strikethrough": false,
+								"underline": false
+							}
+						}
+					}
+				],
+				"style": {
+					"align": 1,
+					"folded": false
+				}
+			}
+		}
+	],
+	"index": 0
+}'
+```
+* 返回数据
+```
+{
+  "code": 0,
+  "data": {
+    "children": [
+      {
+        "block_id": "doxcn920u7BwSlQ4yzFxcZO72fb",
+        "block_type": 13,
+        "ordered": {
+          "elements": [
+            {
+              "text_run": {
+                "content": "无序列表二",
+                "text_element_style": {
+                  "bold": false,
+                  "inline_code": false,
+                  "italic": false,
+                  "strikethrough": false,
+                  "underline": false
+                }
+              }
+            }
+          ],
+          "style": {
+            "align": 1,
+            "folded": false
+          }
+        },
+        "parent_id": "Jg28dOoZ0ofnMdxcfDrcwJE6n0b"
+      }
+    ],
+    "client_token": "2f164140-822e-4324-9306-0725a5e69bff",
+    "document_revision_id": 68
+  },
+  "msg": "success"
+}
+```
