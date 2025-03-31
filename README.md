@@ -7,21 +7,36 @@
 ## 核心功能
 
 ### 文档管理
-- **创建飞书文档**：支持创建新的飞书文档
+- **创建飞书文档**：支持在指定文件夹中创建新的飞书文档
 
 ### 文档内容操作
-- **获取文档信息**：能够获取文档中各个块的详细信息
-- **获取文档纯文本内容**：支持提取文档的纯文本内容
-- **修改文档内容**：
-  - 更新现有文档的内容
-  - 插入新的内容块
+- **获取文档信息**：
+  - 获取文档基本信息（标题、版本等）
+  - 获取文档区块结构和层级
+  - 获取特定区块的详细内容
+- **获取文档纯文本内容**：支持提取文档的完整纯文本内容，便于分析和处理
+- **编辑文档内容**：
+  - **文本块操作**：
+    - 创建和更新带有丰富样式的文本块（粗体、斜体、下划线、删除线、行内代码）
+    - 支持文本颜色设置（灰色、棕色、橙色、黄色、绿色、蓝色、紫色）
+    - 支持文本对齐方式调整（左对齐、居中、右对齐）
+  - **标题块操作**：创建从一级到九级的不同级别标题
+  - **代码块操作**：
+    - 创建多种编程语言的代码块
+    - 支持代码语法高亮
+    - 支持自动换行设置
+  - **列表操作**：
+    - 创建有序列表（编号列表）
+    - 创建无序列表（项目符号列表）
+  - **批量内容创建**：支持在单次操作中创建多个不同类型的内容块
 
 ### 计划中的功能
 - **高级内容插入**：
+  - 表格插入：支持行列结构化数据
   - 插入图表：支持各类数据可视化图表
   - 插入流程图：支持流程图和思维导图
   - 插入公式：支持数学公式和科学符号
-- 图表、流程图的内容识别
+- 图表、流程图的内容识别和解析
 
 快速开始，详见[配置](#配置)部分：
 
@@ -56,9 +71,7 @@ yarn dlx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<
 bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你的飞书应用密钥>
 ```
 
-已发布到smithery平台，可访问:https://smithery.ai/server/@cso1z/feishu-mcp 
-可以直接使用:`npx -y @smithery/cli@latest install @cso1z/feishu-mcp --client cursor --config "{\"port\":3335,\"feishuAppId\":\"cli_a7*****ac79100c\",\"feishuAppSecret\":\"4spDkm3qA*****NMmuFj6JWa\"}"`
-
+**已发布到smithery平台，可访问:https://smithery.ai/server/@cso1z/feishu-mcp**
 
 
 关于如何创建飞书应用和获取应用凭证的说明可以在[这里](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
@@ -126,6 +139,21 @@ bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你�
 2. 如果需要修改飞书文档内容应该明确告知飞书文档链接，例如：`https://vq5ixxxx7bc.feishu.cn/docx/J6T0d6exxxxxxxDdc1zqwnph`
 3. 询问关于文档的问题或请求基于文档内容执行操作
 4. 创建编辑文档都需要权限，可以到飞书开放平台对账号进行测试`https://open.feishu.cn/api-explorer/cli_a75a8ca0ac79100c?apiName=tenant_access_token_internal&from=op_doc&project=auth&resource=auth&version=v3`
+
+## 文档权限与故障排查
+
+### 权限类型
+权限分为两种：机器人权限、文档访问权限
+
+### 权限验证与排查
+1. 获取token：[https://open.feishu.cn/api-explorer/cli_a7582508c93ad00d?apiName=tenant_access_token_internal&project=auth&resource=auth&version=v3](https://open.feishu.cn/api-explorer/cli_a7582508c93ad00d?apiName=tenant_access_token_internal&project=auth&resource=auth&version=v3)
+2. 使用第1步获取的token，验证是否有权限访问该文档：[https://open.feishu.cn/api-explorer/cli_a7582508c93ad00d?apiName=get&project=docx&resource=document&version=v1](https://open.feishu.cn/api-explorer/cli_a7582508c93ad00d?apiName=get&project=docx&resource=document&version=v1)
+
+### 排查方法
+在飞书开发平台测试权限正常（在开放平台调试，失败时会有充足提示信息和指导）
+
+### 文档授权
+如遇到权限问题，请参考[云文档常见问题](https://open.feishu.cn/document/ukTMukTMukTM/uczNzUjL3czM14yN3MTN)，特别关注如何为应用或用户开通文档权限。
 
 ## Cursor最佳实践
 
