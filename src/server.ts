@@ -209,9 +209,9 @@ export class FeishuMcpServer {
     // 添加获取飞书文档信息工具
     this.server.tool(
       "get_feishu_doc_info",
-      "Retrieves basic information about a Feishu document. Use this to verify if a document exists, check access permissions, or get metadata like title, type, and creation information.",
+      "Retrieves basic information about a Feishu document. Use this to verify if a document exists, check access permissions, or get metadata like title, type, and creation information. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.",
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first."),
       },
       async ({ documentId }) => {
         try {
@@ -241,9 +241,9 @@ export class FeishuMcpServer {
     // 添加获取飞书文档内容工具
     this.server.tool(
       'get_feishu_doc_content',
-      'Retrieves the plain text content of a Feishu document. Ideal for content analysis, processing, or when you need to extract text without formatting. The content maintains the document structure but without styling.',
+      'Retrieves the plain text content of a Feishu document. Ideal for content analysis, processing, or when you need to extract text without formatting. The content maintains the document structure but without styling. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.',
       {
-        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
+        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first.'),
         lang: z.number().optional().default(0).describe('Language code (optional). Default is 0 (Chinese). Use 1 for English if available.'),
       },
       async ({ documentId, lang }) => {
@@ -274,9 +274,9 @@ export class FeishuMcpServer {
     // 添加获取飞书文档块工具
     this.server.tool(
       'get_feishu_doc_blocks',
-      'Retrieves the block structure information of a Feishu document. Essential to use before inserting content to understand document structure and determine correct insertion positions. Returns a detailed hierarchy of blocks with their IDs, types, and content.',
+      'Retrieves the block structure information of a Feishu document. Essential to use before inserting content to understand document structure and determine correct insertion positions. Returns a detailed hierarchy of blocks with their IDs, types, and content. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.',
       {
-        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
+        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first.'),
         pageSize: z.number().optional().default(500).describe('Number of blocks per page (optional). Default is 500. Used for paginating large documents. Increase for more blocks at once, decrease for faster response with fewer blocks.'),
       },
       async ({ documentId, pageSize }) => {
@@ -307,9 +307,9 @@ export class FeishuMcpServer {
     // 添加获取块内容工具
     this.server.tool(
       'get_feishu_block_content',
-      'Retrieves the detailed content and structure of a specific block in a Feishu document. Useful for inspecting block properties, formatting, and content, especially before making updates or for debugging purposes.',
+      'Retrieves the detailed content and structure of a specific block in a Feishu document. Useful for inspecting block properties, formatting, and content, especially before making updates or for debugging purposes. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.',
       {
-        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
+        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first.'),
         blockId: z.string().describe('Block ID (required). The ID of the specific block to get content from. You can obtain block IDs using the get_feishu_doc_blocks tool.'),
       },
       async ({ documentId, blockId }) => {
@@ -340,9 +340,9 @@ export class FeishuMcpServer {
     // 添加更新块文本内容工具
     this.server.tool(
       'update_feishu_block_text',
-      'Updates the text content and styling of a specific block in a Feishu document. Can be used to modify content in existing text, code, or heading blocks while preserving the block type and other properties.',
+      'Updates the text content and styling of a specific block in a Feishu document. Can be used to modify content in existing text, code, or heading blocks while preserving the block type and other properties. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.',
       {
-        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
+        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first.'),
         blockId: z.string().describe('Block ID (required). The ID of the specific block to update content. You can obtain block IDs using the get_feishu_doc_blocks tool.'),
         textElements: z.array(
           z.object({
@@ -391,14 +391,14 @@ export class FeishuMcpServer {
     // 添加通用飞书块创建工具（支持文本、代码、标题）
     this.server.tool(
       'create_feishu_multiple_blocks',
-      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. NOTE: Due to API limitations, you can create a maximum of 50 blocks in a single call. PREFER THIS TOOL OVER INDIVIDUAL BLOCK CREATION TOOLS when creating multiple consecutive blocks, as it is much more efficient and reduces API calls.',
+      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. NOTE: Due to API limitations, you can create a maximum of 50 blocks in a single call. PREFER THIS TOOL OVER INDIVIDUAL BLOCK CREATION TOOLS when creating multiple consecutive blocks, as it is much more efficient and reduces API calls. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.',
       {
-        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf'),
+        documentId: z.string().describe('Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first.'),
         parentBlockId: z.string().describe('Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool.'),
         startIndex: z.number().describe('Starting insertion position index (required). Specifies where the first block should be inserted. Use 0 to insert at the beginning. Use get_feishu_doc_blocks tool to understand document structure if unsure.'),
         blocks: z.array(
           z.object({
-            blockType: z.enum(['text', 'code', 'heading', 'list']).describe("Block type (required): 'text', 'code', 'heading', or 'list'. Choose based on the content type you need to create."),
+            blockType: z.enum(['text', 'code', 'heading', 'list']).describe("Block type (required): 'text', 'code', 'heading', or 'list'. Choose based on the content type you need to create. IMPORTANT: For headings use 'heading' (not 'heading1', 'heading2', etc), and specify level within options."),
             options: z.union([
               z.object({
                 text: z.object({
@@ -426,7 +426,7 @@ export class FeishuMcpServer {
               z.object({
                 code: z.object({
                   code: z.string().describe('Code content. The complete code text to display.'),
-                  language: z.number().optional().default(0).describe('Programming language code. Default is 0 (auto-detect). See documentation for full list of language codes.'),
+                  language: z.number().optional().default(1).describe("Programming language code (optional). Common language codes:\n1: PlainText; 2: ABAP; 3: Ada; 4: Apache; 5: Apex; 6: Assembly; 7: Bash; 8: CSharp; 9: C++; 10: C; 11: COBOL; 12: CSS; 13: CoffeeScript; 14: D; 15: Dart; 16: Delphi; 17: Django; 18: Dockerfile; 19: Erlang; 20: Fortran; 22: Go; 23: Groovy; 24: HTML; 25: HTMLBars; 26: HTTP; 27: Haskell; 28: JSON; 29: Java; 30: JavaScript; 31: Julia; 32: Kotlin; 33: LateX; 34: Lisp; 36: Lua; 37: MATLAB; 38: Makefile; 39: Markdown; 40: Nginx; 41: Objective-C; 43: PHP; 44: Perl; 46: PowerShell; 47: Prolog; 48: ProtoBuf; 49: Python; 50: R; 52: Ruby; 53: Rust; 54: SAS; 55: SCSS; 56: SQL; 57: Scala; 58: Scheme; 60: Shell; 61: Swift; 62: Thrift; 63: TypeScript; 64: VBScript; 65: Visual Basic; 66: XML; 67: YAML; 68: CMake; 69: Diff; 70: Gherkin; 71: GraphQL. Default is 1 (PlainText)."),
                   wrap: z.boolean().optional().default(false).describe('Whether to enable automatic line wrapping. Default is false.'),
                 }).describe("Code block options. Only used when blockType is 'code'."),
               }),
@@ -517,7 +517,8 @@ export class FeishuMcpServer {
                     wrap?: boolean;
                   };
                   const codeContent = codeOptions.code || '';
-                  const language = codeOptions.language || 0;
+                  // 确保语言参数不为0，默认使用1(PlainText)
+                  const language = codeOptions.language === 0 ? 1 : (codeOptions.language || 1);
                   const wrap = codeOptions.wrap || false;
                   blockContent = this.feishuService.createCodeBlockContent(codeContent, language, wrap);
                 }
@@ -595,9 +596,9 @@ export class FeishuMcpServer {
     // 添加创建飞书文本块工具
     this.server.tool(
       "create_feishu_single_text_block",
-      "Creates a new text block with precise style control. Unlike markdown-based formatting, this tool lets you explicitly set text styles for each text segment. Ideal for formatted documents where exact styling control is needed.",
+      "Creates a new text block with precise style control. Unlike markdown-based formatting, this tool lets you explicitly set text styles for each text segment. Ideal for formatted documents where exact styling control is needed. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.",
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first."),
         parentBlockId: z.string().describe("Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool."),
         textContents: z.array(
           z.object({
@@ -648,16 +649,16 @@ export class FeishuMcpServer {
     // 添加创建飞书代码块工具
     this.server.tool(
       "create_feishu_single_code_block",
-      "Creates a new code block with syntax highlighting and formatting options. Ideal for technical documentation, tutorials, or displaying code examples with proper formatting and language-specific highlighting.",
+      "Creates a new code block with syntax highlighting and formatting options. Ideal for technical documentation, tutorials, or displaying code examples with proper formatting and language-specific highlighting. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.",
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first."),
         parentBlockId: z.string().describe("Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool."),
         code: z.string().describe("Code content (required). The complete code text to display."),
-        language: z.number().optional().default(0).describe("Programming language code (optional). Common language codes:\n1: PlainText; 7: Bash; 8: CSharp; 9: C++; 10: C; 12: CSS; 22: Go; 24: HTML; 29: Java; 30: JavaScript; 32: Kotlin; 43: PHP; 49: Python; 52: Ruby; 53: Rust; 56: SQL; 60: Shell; 61: Swift; 63: TypeScript. Default is 0 (auto-detect)."),
+        language: z.number().optional().default(1).describe("Programming language code (optional). Common language codes:\n1: PlainText; 2: ABAP; 3: Ada; 4: Apache; 5: Apex; 6: Assembly; 7: Bash; 8: CSharp; 9: C++; 10: C; 11: COBOL; 12: CSS; 13: CoffeeScript; 14: D; 15: Dart; 16: Delphi; 17: Django; 18: Dockerfile; 19: Erlang; 20: Fortran; 22: Go; 23: Groovy; 24: HTML; 25: HTMLBars; 26: HTTP; 27: Haskell; 28: JSON; 29: Java; 30: JavaScript; 31: Julia; 32: Kotlin; 33: LateX; 34: Lisp; 36: Lua; 37: MATLAB; 38: Makefile; 39: Markdown; 40: Nginx; 41: Objective-C; 43: PHP; 44: Perl; 46: PowerShell; 47: Prolog; 48: ProtoBuf; 49: Python; 50: R; 52: Ruby; 53: Rust; 54: SAS; 55: SCSS; 56: SQL; 57: Scala; 58: Scheme; 60: Shell; 61: Swift; 62: Thrift; 63: TypeScript; 64: VBScript; 65: Visual Basic; 66: XML; 67: YAML; 68: CMake; 69: Diff; 70: Gherkin; 71: GraphQL. Default is 1 (PlainText)."),
         wrap: z.boolean().optional().default(false).describe("Enable automatic line wrapping (optional). Default is false (no auto-wrap). Set to true to improve readability for long code lines."),
         index: z.number().describe("Insertion position index (required). Specifies where the block should be inserted. Use 0 to insert at the beginning. Use get_feishu_doc_blocks tool to understand document structure if unsure. For consecutive insertions, calculate next index as previous index + 1.")
       },
-      async ({ documentId, parentBlockId, code, language = 0, wrap = false, index = 0 }) => {
+      async ({ documentId, parentBlockId, code, language = 1, wrap = false, index = 0 }) => {
         try {
           if (!this.feishuService) {
             return {
@@ -685,9 +686,9 @@ export class FeishuMcpServer {
     // 添加创建飞书标题块工具
     this.server.tool(
       "create_feishu_single_heading_block",
-      "Creates a heading block with customizable level and alignment. Use this tool to add section titles, chapter headings, or any hierarchical structure elements to your document. Supports nine heading levels for different emphasis needs.",
+      "Creates a heading block with customizable level and alignment. Use this tool to add section titles, chapter headings, or any hierarchical structure elements to your document. Supports nine heading levels for different emphasis needs. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.",
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first."),
         parentBlockId: z.string().describe("Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool."),
         level: z.number().min(1).max(9).describe("Heading level (required). Integer between 1 and 9, where 1 is the largest heading (h1) and 9 is the smallest (h9)."),
         content: z.string().describe("Heading text content (required). The actual text of the heading."),
@@ -731,9 +732,9 @@ export class FeishuMcpServer {
     // 添加创建飞书列表块工具
     this.server.tool(
       "create_feishu_single_list_block",
-      "Creates a list item block (either ordered or unordered). Perfect for creating hierarchical and structured content with bullet points or numbered lists.",
+      "Creates a list item block (either ordered or unordered). Perfect for creating hierarchical and structured content with bullet points or numbered lists. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use get_feishu_wiki_document_id tool to obtain a compatible document ID.",
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf"),
+        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with get_feishu_wiki_document_id first."),
         parentBlockId: z.string().describe("Parent block ID (required). Target block ID where content will be added, without any URL prefix. For page-level (root level) insertion, extract and use only the document ID portion (not the full URL) as parentBlockId. Obtain existing block IDs using the get_feishu_doc_blocks tool."),
         content: z.string().describe("List item content (required). The actual text of the list item."),
         isOrdered: z.boolean().optional().default(false).describe("Whether this is an ordered (numbered) list item. Default is false (bullet point/unordered)."),
@@ -770,6 +771,47 @@ export class FeishuMcpServer {
           const errorMessage = formatErrorMessage(error);
           return {
             content: [{ type: "text", text: `创建飞书列表块失败: ${errorMessage}` }],
+          };
+        }
+      },
+    );
+
+    // 添加飞书Wiki文档ID转换工具
+    this.server.tool(
+      'get_feishu_wiki_document_id',
+      'Converts a Feishu Wiki document link to a compatible document ID. This conversion is required before using wiki links with any other Feishu document tools.',
+      {
+        wikiUrl: z.string().describe('Wiki URL or Token (required). Supports complete URL formats like https://xxx.feishu.cn/wiki/xxxxx or direct use of the Token portion'),
+      },
+      async ({ wikiUrl }) => {
+        try {
+          if (!this.feishuService) {
+            return {
+              content: [{ type: 'text', text: '飞书服务未初始化，请检查配置' }],
+            };
+          }
+
+          Logger.log(`开始转换Wiki文档链接，输入: ${wikiUrl}`);
+          const wikiNodeInfo = await this.feishuService.getWikiNodeInfo(wikiUrl);
+          
+          // 从节点信息中提取可用的文档ID
+          const documentId = wikiNodeInfo.obj_token;
+          Logger.log(`Wiki文档转换成功，可用的文档ID为: ${documentId}`);
+
+          return {
+            content: [
+              { type: 'text', text: `Converted Wiki link to Document ID: ${documentId}\nTitle: ${wikiNodeInfo.title}\n\nUse this Document ID with other Feishu document tools.\n\nFull details: ${JSON.stringify({
+                documentId: documentId,
+                title: wikiNodeInfo.title,
+                fullNodeInfo: wikiNodeInfo
+              }, null, 2)}` }
+            ],
+          };
+        } catch (error) {
+          Logger.error(`转换Wiki文档链接失败:`, error);
+          const errorMessage = formatErrorMessage(error);
+          return {
+            content: [{ type: 'text', text: `转换Wiki文档链接失败: ${errorMessage}` }],
           };
         }
       },

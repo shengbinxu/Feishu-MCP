@@ -511,3 +511,37 @@ curl -i -X POST 'https://open.feishu.cn/open-apis/docx/v1/documents/Jg28dOoZ0ofn
   "msg": "success"
 }
 ```
+
+## 11.把wiki文档id转成documentId(只有转成documentId才能进行后续操作)
+* 请求接口：
+```
+curl -i -X GET 'https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node?obj_type=wiki&token=PdDWwIHD6iV8jFkInMhcIOY7npg' \
+-H 'Authorization: Bearer u-cgqN.PmJ90f87V9xSThOkSl42THl4lRbX2001gA22DDc'
+```
+* 返回数据
+```
+{
+  "code": 0,
+  "data": {
+    "node": {
+      "creator": "ou_14a35ea3607bb853af3a84b589161b82",
+      "has_child": true,
+      "node_create_time": "1741868733",
+      "node_creator": "ou_14a35ea3607bb853af3a84b589161b82",
+      "node_token": "PdDWwIHD6iV8jFkInMhcIOY7npg",
+      "node_type": "origin",
+      "obj_create_time": "1741868733",
+      "obj_edit_time": "1741868733",
+      "obj_token": "YLidd9mlKovX6dxJZmicGBBMnQg",
+      "obj_type": "docx",
+      "origin_node_token": "PdDWwIHD6iV8jFkInMhcIOY7npg",
+      "origin_space_id": "7481269240683888644",
+      "owner": "ou_14a35ea3607bb853af3a84b589161b82",
+      "parent_node_token": "",
+      "space_id": "7481269240683888644",
+      "title": "首页"
+    }
+  },
+  "msg": "success"
+}
+```

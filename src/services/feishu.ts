@@ -319,7 +319,10 @@ export class FeishuService {
         throw new Error(`无效的文档ID: ${documentId}`);
       }
 
-      Logger.log(`开始创建代码块，文档ID: ${docId}，父块ID: ${parentBlockId}，语言: ${language}，自动换行: ${wrap}，插入位置: ${index}`);
+      // 确保语言参数不为0，默认使用1(PlainText)
+      const safeLanguage = language === 0 ? 1 : language;
+
+      Logger.log(`开始创建代码块，文档ID: ${docId}，父块ID: ${parentBlockId}，语言: ${safeLanguage}，自动换行: ${wrap}，插入位置: ${index}`);
 
       const blockContent = {
         block_type: 14, // 14表示代码块
@@ -339,7 +342,7 @@ export class FeishuService {
             }
           ],
           style: {
-            language: language,
+            language: safeLanguage,
             wrap: wrap
           }
         }
@@ -441,6 +444,9 @@ export class FeishuService {
 
   // 创建代码块内容
   createCodeBlockContent(code: string, language: number = 0, wrap: boolean = false): any {
+    // 确保语言参数不为0，默认使用1(PlainText)
+    const safeLanguage = language === 0 ? 1 : language;
+    
     return {
       block_type: 14, // 14表示代码块
       code: {
@@ -459,7 +465,7 @@ export class FeishuService {
           }
         ],
         style: {
-          language: language,
+          language: safeLanguage,
           wrap: wrap
         }
       }
@@ -714,6 +720,63 @@ export class FeishuService {
     } catch (error) {
       this.wrapAndThrowError(`创建${isOrdered ? "有序" : "无序"}列表块失败`, error);
     }
+  }
+
+  // 获取Wiki节点信息并提取文档ID
+  async getWikiNodeInfo(wikiToken: string): Promise<any> {
+    try {
+      const wikiId = this.extractWikiIdFromUrl(wikiToken);
+      if (!wikiId) {
+        throw new Error(`无效的Wiki链接或Token: ${wikiToken}`);
+      }
+
+      Logger.log(`开始获取Wiki节点信息，Token: ${wikiId}`);
+
+      const endpoint = `/wiki/v2/spaces/get_node?obj_type=wiki&token=${wikiId}`;
+      Logger.log(`准备请求API端点: ${endpoint}`);
+
+      const response = await this.request<{code: number, msg: string, data?: {node: any}}>(endpoint);
+
+      if (response.code !== 0) {
+        throw new Error(`获取Wiki节点信息失败: ${response.msg}`);
+      }
+
+      const nodeInfo = response.data?.node;
+      Logger.log(`Wiki节点信息获取成功: ${JSON.stringify(nodeInfo, null, 2)}`);
+
+      if (!nodeInfo) {
+        throw new Error(`获取Wiki节点信息失败: 返回的节点信息为空`);
+      }
+
+      // 验证节点类型是否为docx
+      if (nodeInfo.obj_type !== 'docx') {
+        throw new Error(`Wiki节点类型不是docx，无法处理: ${nodeInfo.obj_type}`);
+      }
+
+      return nodeInfo;
+    } catch (error) {
+      this.wrapAndThrowError('获取Wiki节点信息失败', error);
+    }
+  }
+
+  // 从URL或标识符中提取Wiki ID
+  private extractWikiIdFromUrl(url: string): string | null {
+    // 处理飞书Wiki URL，提取Token
+    // 1. wiki URL格式: https://xxx.feishu.cn/wiki/xxxxx
+    const wikiMatch = url.match(/\/wiki\/([^?]+)/);
+    
+    // 2. 直接使用Token
+    const directIdMatch = url.match(/^([^?]+)$/);
+    
+    // 返回匹配结果，如果URL中有查询参数，去掉它们
+    let result = wikiMatch ? wikiMatch[1] : (directIdMatch ? directIdMatch[1] : null);
+    
+    // 如果存在查询参数，去掉它们
+    if (result && result.includes('?')) {
+      result = result.split('?')[0];
+    }
+    
+    return result;
   }
 
   private extractDocIdFromUrl(url: string): string | null {
