@@ -1,4 +1,3 @@
-
 // 定义块类型接口
 export interface FeishuBlock {
   block_type: number;
@@ -81,8 +80,6 @@ export function buildCreateBlocksRequest(blocks: FeishuBlock[], index: number = 
 
 /**
  * 创建文本块内容
- * @param text 文本内容
- * @param style 文本样式
  * @param align 对齐方式：1左对齐，2居中，3右对齐
  * @returns 文本块内容对象
  */
@@ -169,6 +166,45 @@ export function createHeadingBlockContent(text: string, level: number = 1, align
     ],
     style: {
       align: align,
+      folded: false
+    }
+  };
+
+  return blockContent;
+}
+
+/**
+ * 创建列表块内容（有序或无序）
+ * @param text 列表项文本
+ * @param isOrdered 是否为有序列表
+ * @param align 对齐方式：1左对齐，2居中，3右对齐
+ * @returns 列表块内容对象
+ */
+export function createListBlockContent(text: string, isOrdered: boolean = false, align: number = 1): FeishuBlock {
+  // 确保 align 值在合法范围内（1-3）
+  const safeAlign = (align === 1 || align === 2 || align === 3) ? align : 1;
+
+  // 有序列表是 block_type: 13，无序列表是 block_type: 12
+  const blockType = isOrdered ? 13 : 12;
+  const propertyKey = isOrdered ? "ordered" : "bullet";
+
+  // 构建块内容
+  const blockContent: any = {
+    block_type: blockType
+  };
+
+  // 设置列表属性
+  blockContent[propertyKey] = {
+    elements: [
+      {
+        text_run: {
+          content: text,
+          text_element_style: {}
+        }
+      }
+    ],
+    style: {
+      align: safeAlign,
       folded: false
     }
   };

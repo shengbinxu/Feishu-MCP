@@ -1,10 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { FeishuService } from './services/feishu.js';
+import { FeishuService } from './services/feishuService.js';
 import express, { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { IncomingMessage, ServerResponse } from 'http';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { formatErrorMessage } from './utils/error.js';
+import { createTextBlockContent, createCodeBlockContent, createHeadingBlockContent, createListBlockContent } from './services/feishuBlockService.js';
+import { DocumentIdSchema } from './types/feishuSchema.js';
 
 export const Logger = {
   log: (...args: any[]) => {
@@ -13,131 +16,10 @@ export const Logger = {
   error: (...args: any[]) => {
     console.error(...args);
   },
+  info: (...args: any[]) => {
+    console.info(...args);
+  },
 };
-
-// 添加一个工具类方法，用于格式化错误信息
-function formatErrorMessage(error: any): string {
-  if (error instanceof Error) {
-    return error.message;
-  } else if (typeof error === 'string') {
-    return error;
-  } else if (error && typeof error === 'object') {
-    try {
-      // 处理包含apiError字段的FeishuError对象
-      if (error.apiError) {
-        const apiError = error.apiError;
-        let errorMsg = '';
-        
-        // 处理标准飞书API错误格式
-        if (apiError.code && apiError.msg) {
-          errorMsg = `${apiError.msg} (错误码: ${apiError.code})`;
-          
-          // 添加字段验证错误信息
-          if (apiError.error && apiError.error.field_violations && apiError.error.field_violations.length > 0) {
-            const violations = apiError.error.field_violations;
-            errorMsg += '\n字段验证错误:';
-            violations.forEach((violation: any) => {
-              let detail = `\n - ${violation.field}`;
-              if (violation.description) {
-                detail += `: ${violation.description}`;
-              }
-              if (violation.value) {
-                detail += `，提供的值: ${violation.value}`;
-              }
-              errorMsg += detail;
-            });
-            
-            // 添加排查建议链接
-            if (apiError.error.troubleshooter) {
-              errorMsg += `\n\n${apiError.error.troubleshooter}`;
-            }
-          }
-          
-          return errorMsg;
-        }
-        
-        // 如果apiError没有标准结构，尝试序列化
-        return `API错误: ${JSON.stringify(apiError)}`;
-      }
-      
-      // 处理飞书API特定的错误格式
-      if (error.code && error.msg) {
-        // 基本错误信息
-        let errorMsg = `${error.msg} (错误码: ${error.code})`;
-        
-        // 如果有详细的验证错误信息
-        if (error.error && error.error.field_violations && error.error.field_violations.length > 0) {
-          const violations = error.error.field_violations;
-          errorMsg += '\n字段验证错误:';
-          violations.forEach((violation: any) => {
-            let detail = `\n - ${violation.field}`;
-            if (violation.description) {
-              detail += `: ${violation.description}`;
-            }
-            if (violation.value) {
-              detail += `，提供的值: ${violation.value}`;
-            }
-            errorMsg += detail;
-          });
-          
-          // 添加排查建议链接（如果有）
-          if (error.error.troubleshooter) {
-            errorMsg += `\n\n${error.error.troubleshooter}`;
-          }
-        }
-        return errorMsg;
-      }
-      
-      // 处理 {status, err} 格式的错误
-      if (error.status && error.err) {
-        return `操作失败 (状态码: ${error.status}): ${error.err}`;
-      }
-      
-      // 尝试提取API错误信息，通常在错误对象的message或error字段中
-      if (error.message) {
-        return error.message;
-      } else if (error.error) {
-        if (typeof error.error === 'string') {
-          return error.error;
-        } else if (error.error.message) {
-          return error.error.message;
-        } else if (error.error.field_violations) {
-          // 处理错误嵌套在error对象中的情况
-          const violations = error.error.field_violations;
-          let errorMsg = '字段验证错误:';
-          violations.forEach((violation: any) => {
-            let detail = `\n - ${violation.field}`;
-            if (violation.description) {
-              detail += `: ${violation.description}`;
-            }
-            if (violation.value) {
-              detail += `，提供的值: ${violation.value}`;
-            }
-            errorMsg += detail;
-          });
-          return errorMsg;
-        }
-      } else if (error.code || error.status) {
-        // 处理HTTP错误或API错误码
-        const code = error.code || error.status;
-        const msg = error.statusText || error.msg || 'Unknown error';
-        return `操作失败 (错误码: ${code}): ${msg}`;
-      }
-      
-      // 如果上述都不符合，尝试将整个对象序列化（但移除敏感信息）
-      const safeError = { ...error };
-      // 移除可能的敏感信息
-      ['token', 'secret', 'password', 'key', 'credentials'].forEach(key => {
-        if (key in safeError) delete safeError[key];
-      });
-      return `发生错误: ${JSON.stringify(safeError)}`;
-    } catch (e) {
-      console.error("Error formatting error message:", e);
-      return '发生未知错误';
-    }
-  }
-  return '发生未知错误';
-}
 
 export class FeishuMcpServer {
   private readonly server: McpServer;
@@ -208,16 +90,16 @@ export class FeishuMcpServer {
 
     // 添加获取飞书文档信息工具
     this.server.tool(
-      "get_feishu_document_info",
-      "Retrieves basic information about a Feishu document. Use this to verify if a document exists, check access permissions, or get metadata like title, type, and creation information. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
+      'get_feishu_document_info',
+      'Retrieves basic information about a Feishu document. Use this to verify a document exists, check access permissions, or get metadata like title, type, and creation information.',
       {
-        documentId: z.string().describe("Document ID or URL (required). Supports the following formats:\n1. Standard document URL: https://xxx.feishu.cn/docs/xxx or https://xxx.feishu.cn/docx/xxx\n2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx\n3. Direct document ID: e.g., JcKbdlokYoPIe0xDzJ1cduRXnRf\nNote: Wiki links require conversion with convert_feishu_wiki_to_document_id first."),
+        documentId: DocumentIdSchema,
       },
       async ({ documentId }) => {
         try {
           if (!this.feishuService) {
             return {
-              content: [{ type: "text", text: "Feishu service is not initialized. Please check the configuration" }],
+              content: [{ type: 'text', text: '飞书服务未初始化，请检查配置' }],
             };
           }
 
@@ -226,13 +108,13 @@ export class FeishuMcpServer {
           Logger.log(`飞书文档信息获取成功，标题: ${docInfo.title}`);
 
           return {
-            content: [{ type: "text", text: JSON.stringify(docInfo, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify(docInfo, null, 2) }],
           };
         } catch (error) {
           Logger.error(`获取飞书文档信息失败:`, error);
-          const errorMessage = formatErrorMessage(error);
+          const errorMessage = formatErrorMessage(error, '获取飞书文档信息失败');
           return {
-            content: [{ type: "text", text: `获取飞书文档信息失败: ${errorMessage}` }],
+            content: [{ type: 'text', text: errorMessage }],
           };
         }
       },
@@ -501,7 +383,7 @@ export class FeishuMcpServer {
                     textStyles.push({ text: '', style: {} });
                   }
                   const align = textOptions.align || 1;
-                  blockContent = this.feishuService.createTextBlockContent(textStyles, align);
+                  blockContent = createTextBlockContent(textStyles, align);
                 }
                 break;
               }
@@ -520,7 +402,7 @@ export class FeishuMcpServer {
                   // 确保语言参数不为0，默认使用1(PlainText)
                   const language = codeOptions.language === 0 ? 1 : (codeOptions.language || 1);
                   const wrap = codeOptions.wrap || false;
-                  blockContent = this.feishuService.createCodeBlockContent(codeContent, language, wrap);
+                  blockContent = createCodeBlockContent(codeContent, language, wrap);
                 }
                 break;
               }
@@ -541,7 +423,7 @@ export class FeishuMcpServer {
                     // 确保对齐方式值在合法范围内
                     const headingAlign = (headingOptions.align === 1 || headingOptions.align === 2 || headingOptions.align === 3) 
                       ? headingOptions.align : 1;
-                    blockContent = this.feishuService.createHeadingBlockContent(headingContent, level, headingAlign);
+                    blockContent = createHeadingBlockContent(headingContent, level, headingAlign);
                   }
                 }
                 break;
@@ -563,7 +445,7 @@ export class FeishuMcpServer {
                     // 确保对齐方式值在合法范围内
                     const align = (listOptions.align === 1 || listOptions.align === 2 || listOptions.align === 3)
                       ? listOptions.align : 1;
-                    blockContent = this.feishuService.createListBlockContent(content, isOrdered, align);
+                    blockContent = createListBlockContent(content, isOrdered, align);
                   }
                 }
                 break;
