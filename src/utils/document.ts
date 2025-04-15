@@ -2,7 +2,7 @@
  * 从URL或ID中提取飞书文档ID
  * 支持多种格式:
  * 1. 标准文档URL: https://xxx.feishu.cn/docs/xxx 或 https://xxx.feishu.cn/docx/xxx
- * 2. API URL: https://open.feishu.cn/open-apis/doc/v2/documents/xxx
+ * 2. API URL: https://open.feishu.cn/open-apis/docx/v1/documents/xxx
  * 3. 直接ID: JcKbdlokYoPIe0xDzJ1cduRXnRf
  * 
  * @param input 文档URL或ID

@@ -1,4 +1,4 @@
-import { Logger } from '../server.js';
+import { Logger } from './logger.js';
 
 /**
  * 飞书API错误接口
