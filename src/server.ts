@@ -250,12 +250,12 @@ export class FeishuMcpServer {
     // 添加通用飞书块创建工具（支持文本、代码、标题）
     this.server.tool(
       'batch_create_feishu_blocks',
-      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. NOTE: Due to API limitations, you can create a maximum of 50 blocks in a single call. PREFER THIS TOOL OVER INDIVIDUAL BLOCK CREATION TOOLS when creating multiple consecutive blocks, as it is much more efficient and reduces API calls. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
+      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. AUTOMATICALLY handles batching for large number of blocks (>50) by splitting into multiple requests. For error recovery, use get_feishu_document_blocks to check the document state. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
         startIndex: StartIndexSchema,
-        blocks: z.array(BlockConfigSchema).max(50).describe('Array of block configurations (required). Each element contains blockType and options properties. Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"code",options:{code:{code:"console.log(\'Hello\')",language:30}}}]. Maximum 50 blocks per call.'),
+        blocks: z.array(BlockConfigSchema).describe('Array of block configurations (required). Each element contains blockType and options properties. Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"code",options:{code:{code:"console.log(\'Hello\')",language:30}}}]. Handles any number of blocks by automatically batching in groups of 50.'),
       },
       async ({ documentId, parentBlockId, startIndex = 0, blocks }) => {
         try {
@@ -270,46 +270,132 @@ export class FeishuMcpServer {
             };
           }
 
-          if (blocks.length > 50) {
+          // 如果块数量不超过50，直接调用一次API
+          if (blocks.length <= 50) {
+            Logger.info(
+              `开始批量创建飞书块，文档ID: ${documentId}，父块ID: ${parentBlockId}，块数量: ${blocks.length}，起始插入位置: ${startIndex}`);
+
+            // 准备要创建的块内容数组
+            const blockContents = [];
+
+            // 处理每个块配置
+            for (const blockConfig of blocks) {
+              const { blockType, options = {} } = blockConfig;
+              
+              // 创建块内容
+              const blockContent = this.feishuService.createBlockContent(blockType, options);
+
+              if (blockContent) {
+                blockContents.push(blockContent);
+                Logger.info(`已准备${blockType}块，内容: ${JSON.stringify(blockContent).substring(0, 100)}...`);
+              }
+            }
+
+            // 批量创建所有块
+            const result = await this.feishuService.createDocumentBlocks(documentId, parentBlockId, blockContents, startIndex);
+            Logger.info(`飞书块批量创建成功，共创建 ${blockContents.length} 个块`);
+
             return {
-              content: [{ 
-                type: 'text', 
-                text: '错误: 每次调用最多只能创建50个块。请分批次创建或减少块数量。' 
-              }],
+              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
             };
-          }
+          } else {
+            // 如果块数量超过50，需要分批处理
+            Logger.info(
+              `块数量(${blocks.length})超过50，将分批创建`);
 
-          Logger.info(
-            `开始批量创建飞书块，文档ID: ${documentId}，父块ID: ${parentBlockId}，块数量: ${blocks.length}，起始插入位置: ${startIndex}`);
+            const batchSize = 50; // 每批最大50个
+            const totalBatches = Math.ceil(blocks.length / batchSize);
+            const results = [];
+            let currentStartIndex = startIndex;
+            let createdBlocksCount = 0;
+            let allBatchesSuccess = true;
 
-          // 准备要创建的块内容数组
-          const blockContents = [];
+            // 分批创建块
+            for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+              const batchStart = batchNum * batchSize;
+              const batchEnd = Math.min((batchNum + 1) * batchSize, blocks.length);
+              const currentBatch = blocks.slice(batchStart, batchEnd);
+              
+              Logger.info(
+                `处理第 ${batchNum + 1}/${totalBatches} 批，起始位置: ${currentStartIndex}，块数量: ${currentBatch.length}`);
+              
+              try {
+                // 准备当前批次的块内容
+                const batchBlockContents = [];
+                for (const blockConfig of currentBatch) {
+                  const { blockType, options = {} } = blockConfig;
+                  const blockContent = this.feishuService.createBlockContent(blockType, options);
+                  if (blockContent) {
+                    batchBlockContents.push(blockContent);
+                  }
+                }
 
-          // 处理每个块配置
-          for (const blockConfig of blocks) {
-            const { blockType, options = {} } = blockConfig;
-            
-            // 创建块内容
-            const blockContent = this.feishuService.createBlockContent(blockType, options);
+                // 批量创建当前批次的块
+                const batchResult = await this.feishuService.createDocumentBlocks(
+                  documentId, 
+                  parentBlockId, 
+                  batchBlockContents, 
+                  currentStartIndex
+                );
 
-            if (blockContent) {
-              blockContents.push(blockContent);
-              Logger.info(`已准备${blockType}块，内容: ${JSON.stringify(blockContent).substring(0, 100)}...`);
+                results.push(batchResult);
+                
+                // 计算下一批的起始位置（当前位置+已创建块数量）
+                // 注意：每批成功创建后，需要将起始索引更新为当前索引 + 已创建块数量
+                createdBlocksCount += batchBlockContents.length;
+                currentStartIndex = startIndex + createdBlocksCount;
+                
+                Logger.info(
+                  `第 ${batchNum + 1}/${totalBatches} 批创建成功，当前已创建 ${createdBlocksCount} 个块`);
+              } catch (error) {
+                Logger.error(`第 ${batchNum + 1}/${totalBatches} 批创建失败:`, error);
+                allBatchesSuccess = false;
+                
+                // 如果有批次失败，返回详细错误信息
+                const errorMessage = formatErrorMessage(error);
+                return {
+                  content: [
+                    { 
+                      type: 'text', 
+                      text: `批量创建飞书块部分失败：第 ${batchNum + 1}/${totalBatches} 批处理时出错。\n\n` +
+                            `已成功创建 ${createdBlocksCount} 个块，但还有 ${blocks.length - createdBlocksCount} 个块未能创建。\n\n` +
+                            `错误信息: ${errorMessage}\n\n` +
+                            `建议使用 get_feishu_document_blocks 工具获取文档最新状态，确认已创建的内容，然后从索引位置 ${currentStartIndex} 继续创建剩余块。`
+                    }
+                  ],
+                };
+              }
+            }
+
+            if (allBatchesSuccess) {
+              Logger.info(`所有批次创建成功，共创建 ${createdBlocksCount} 个块`);
+              return {
+                content: [
+                  { 
+                    type: 'text', 
+                    text: `所有飞书块创建成功，共分 ${totalBatches} 批创建了 ${createdBlocksCount} 个块。\n\n` +
+                          `最后一批结果: ${JSON.stringify(results[results.length - 1], null, 2)}`
+                  }
+                ],
+              };
             }
           }
-
-          // 批量创建所有块
-          const result = await this.feishuService.createDocumentBlocks(documentId, parentBlockId, blockContents, startIndex);
-          Logger.info(`飞书块批量创建成功，共创建 ${blockContents.length} 个块`);
-
+          
+          // 这个return语句是为了避免TypeScript错误，实际上代码永远不会执行到这里
           return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            content: [{ type: 'text', text: '操作完成' }],
           };
         } catch (error) {
           Logger.error(`批量创建飞书块失败:`, error);
           const errorMessage = formatErrorMessage(error);
           return {
-            content: [{ type: 'text', text: `批量创建飞书块失败: ${errorMessage}` }],
+            content: [
+              { 
+                type: 'text', 
+                text: `批量创建飞书块失败: ${errorMessage}\n\n` +
+                      `建议使用 get_feishu_document_blocks 工具获取文档当前状态，确认是否有部分内容已创建成功。`
+              }
+            ],
           };
         }
       },
