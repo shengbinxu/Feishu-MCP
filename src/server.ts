@@ -250,7 +250,7 @@ export class FeishuMcpServer {
     // 添加通用飞书块创建工具（支持文本、代码、标题）
     this.server.tool(
       'batch_create_feishu_blocks',
-      'Creates multiple blocks of different types (text, code, heading, list) in a single API call and at the same position. Significantly improves efficiency compared to creating individual blocks separately. ONLY use this when you need to insert multiple blocks CONSECUTIVELY at the SAME position. If blocks need to be inserted at different positions, use individual block creation tools instead. AUTOMATICALLY handles batching for large number of blocks (>50) by splitting into multiple requests. For error recovery, use get_feishu_document_blocks to check the document state. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
+      'RECOMMENDED: Creates multiple blocks of different types (text, code, heading, list) in a single efficient API call. This tool should be PREFERRED OVER individual block creation tools when creating multiple consecutive blocks at the same position. Significantly improves performance and reduces API calls by up to 90% compared to creating blocks individually. AUTOMATICALLY handles batching for large number of blocks (>50) by splitting into multiple requests. For specific block positioning at different locations, use individual block creation tools instead. For error recovery, use get_feishu_document_blocks to check the document state. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
@@ -404,7 +404,7 @@ export class FeishuMcpServer {
     // 添加创建飞书文本块工具
     this.server.tool(
       "create_feishu_text_block",
-      "Creates a new text block with precise style control. Unlike markdown-based formatting, this tool lets you explicitly set text styles for each text segment. Ideal for formatted documents where exact styling control is needed. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
+      "Creates a new text block with precise style control. Unlike markdown-based formatting, this tool lets you explicitly set text styles for each text segment. Ideal for formatted documents where exact styling control is needed. NOTE: If creating multiple blocks at once, use batch_create_feishu_blocks tool instead for better efficiency. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
@@ -440,7 +440,7 @@ export class FeishuMcpServer {
     // 添加创建飞书代码块工具
     this.server.tool(
       "create_feishu_code_block",
-      "Creates a new code block with syntax highlighting and formatting options. Ideal for technical documentation, tutorials, or displaying code examples with proper formatting and language-specific highlighting. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
+      "Creates a new code block with syntax highlighting and formatting options. Ideal for technical documentation, tutorials, or displaying code examples with proper formatting and language-specific highlighting. NOTE: If creating multiple blocks at once, use batch_create_feishu_blocks tool instead for better efficiency. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
@@ -477,7 +477,7 @@ export class FeishuMcpServer {
     // 添加创建飞书标题块工具
     this.server.tool(
       "create_feishu_heading_block",
-      "Creates a heading block with customizable level and alignment. Use this tool to add section titles, chapter headings, or any hierarchical structure elements to your document. Supports nine heading levels for different emphasis needs. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
+      "Creates a heading block with customizable level and alignment. Use this tool to add section titles, chapter headings, or any hierarchical structure elements to your document. Supports nine heading levels for different emphasis needs. NOTE: If creating multiple blocks at once, use batch_create_feishu_blocks tool instead for better efficiency. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
@@ -521,7 +521,7 @@ export class FeishuMcpServer {
     // 添加创建飞书列表块工具
     this.server.tool(
       "create_feishu_list_block",
-      "Creates a list item block (either ordered or unordered). Perfect for creating hierarchical and structured content with bullet points or numbered lists. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
+      "Creates a list item block (either ordered or unordered). Perfect for creating hierarchical and structured content with bullet points or numbered lists. NOTE: If creating multiple blocks at once, use batch_create_feishu_blocks tool instead for better efficiency. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.",
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
