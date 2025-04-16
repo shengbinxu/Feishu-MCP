@@ -250,12 +250,12 @@ export class FeishuMcpServer {
     // 添加通用飞书块创建工具（支持文本、代码、标题）
     this.server.tool(
       'batch_create_feishu_blocks',
-      'RECOMMENDED: Creates multiple blocks of different types (text, code, heading, list) in a single efficient API call. This tool should be PREFERRED OVER individual block creation tools when creating multiple consecutive blocks at the same position. Significantly improves performance and reduces API calls by up to 90% compared to creating blocks individually. AUTOMATICALLY handles batching for large number of blocks (>50) by splitting into multiple requests. For specific block positioning at different locations, use individual block creation tools instead. For error recovery, use get_feishu_document_blocks to check the document state. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
+      'PREFERRED: Efficiently creates multiple blocks (text, code, heading, list) in a single API call. USE THIS TOOL when creating multiple consecutive blocks at the same position - reduces API calls by up to 90%. KEY FEATURES: (1) Handles any number of blocks by auto-batching large requests (>50 blocks), (2) Creates blocks at consecutive positions in a document. CORRECT FORMAT: mcp_feishu_batch_create_feishu_blocks({documentId:"doc123",parentBlockId:"para123",startIndex:0,blocks:[{blockType:"text",options:{...}},{blockType:"heading",options:{...}}]}). For separate positions, use individual block creation tools instead. For wiki links (https://xxx.feishu.cn/wiki/xxx), first convert with convert_feishu_wiki_to_document_id tool.',
       {
         documentId: DocumentIdSchema,
         parentBlockId: ParentBlockIdSchema,
         startIndex: StartIndexSchema,
-        blocks: z.array(BlockConfigSchema).describe('Array of block configurations (required). Each element contains blockType and options properties. Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"code",options:{code:{code:"console.log(\'Hello\')",language:30}}}]. Handles any number of blocks by automatically batching in groups of 50.'),
+        blocks: z.array(BlockConfigSchema).describe('Array of block configurations. CRITICAL: Must be a JSON array object, NOT a string. CORRECT: blocks:[{...}] - WITHOUT quotes around array. INCORRECT: blocks:"[{...}]". Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"code",options:{code:{code:"console.log()",language:30}}}]. Auto-batches requests when exceeding 50 blocks.'),
       },
       async ({ documentId, parentBlockId, startIndex = 0, blocks }) => {
         try {
@@ -265,6 +265,18 @@ export class FeishuMcpServer {
                 {
                   type: 'text',
                   text: 'Feishu service is not initialized. Please check the configuration',
+                },
+              ],
+            };
+          }
+
+          // 类型检查：确保blocks是数组而不是字符串
+          if (typeof blocks === 'string') {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: 'ERROR: The "blocks" parameter was passed as a string instead of an array. Please provide a proper JSON array without quotes. Example: {blocks:[{blockType:"text",options:{...}}]} instead of {blocks:"[{...}]"}',
                 },
               ],
             };
