@@ -33,6 +33,13 @@ export const StartIndexSchema = z.number().describe(
   'Use get_feishu_document_blocks tool to understand document structure if unsure.'
 );
 
+// 结束位置索引参数定义
+export const EndIndexSchema = z.number().describe(
+  'Ending position index (required). Specifies the end of the range for deletion (exclusive). ' +
+  'For example, to delete blocks 2, 3, and 4, use startIndex=2, endIndex=5. ' +
+  'To delete a single block at position 2, use startIndex=2, endIndex=3.'
+);
+
 // 文本对齐方式参数定义
 export const AlignSchema = z.number().optional().default(1).describe(
   'Text alignment: 1 for left (default), 2 for center, 3 for right.'
@@ -143,3 +150,16 @@ export const BlockConfigSchema = z.object({
     z.object({ list: ListBlockSchema }).describe("List block options. Only used when blockType is 'list'."),
   ]).describe('Options for the specific block type. Must provide the corresponding options object based on blockType.'),
 });
+
+// 媒体ID参数定义
+export const MediaIdSchema = z.string().describe(
+  'Media ID (required). The unique identifier for a media resource (image, file, etc.) in Feishu. ' +
+  'Usually obtained from image blocks or file references in documents. ' +
+  'Format is typically like "boxcnrHpsg1QDqXAAAyachabcef".'
+);
+
+// 额外参数定义 - 用于媒体资源下载
+export const MediaExtraSchema = z.string().optional().describe(
+  'Extra parameters for media download (optional). ' +
+  'These parameters are passed directly to the Feishu API and can modify how the media is returned.'
+);

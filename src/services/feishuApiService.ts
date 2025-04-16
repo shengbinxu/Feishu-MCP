@@ -403,8 +403,52 @@ export class FeishuApiService extends BaseApiService {
    * @returns 创建结果
    */
   public async createMixedBlocks(documentId: string, parentBlockId: string, blocks: Array<{type: BlockType, options: any}>, index: number = 0): Promise<any> {
-    const blockContents = this.blockFactory.createBatchBlocks(blocks);
+    const blockContents = blocks.map(block => this.blockFactory.createBlock(block.type, block.options));
     return this.createDocumentBlocks(documentId, parentBlockId, blockContents, index);
+  }
+
+  /**
+   * 删除文档中的块，支持批量删除
+   * @param documentId 文档ID或URL
+   * @param parentBlockId 父块ID（通常是文档ID）
+   * @param startIndex 起始索引
+   * @param endIndex 结束索引
+   * @returns 操作结果
+   */
+  public async deleteDocumentBlocks(documentId: string, parentBlockId: string, startIndex: number, endIndex: number): Promise<any> {
+    try {
+      const normalizedDocId = ParamUtils.processDocumentId(documentId);
+      const endpoint = `/docx/v1/documents/${normalizedDocId}/blocks/${parentBlockId}/children/batch_delete`;
+      
+      // 确保索引有效
+      if (startIndex < 0 || endIndex < startIndex) {
+        throw new Error('无效的索引范围：起始索引必须大于等于0，结束索引必须大于等于起始索引');
+      }
+
+      const payload = {
+        start_index: startIndex,
+        end_index: endIndex
+      };
+
+      Logger.info(`开始删除文档块，文档ID: ${normalizedDocId}，父块ID: ${parentBlockId}，索引范围: ${startIndex}-${endIndex}`);
+      const response = await this.delete(endpoint, payload);
+      
+      Logger.info('文档块删除成功');
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '删除文档块失败');
+    }
+  }
+
+  /**
+   * 删除单个文档块（通过创建起始和结束索引相同的批量删除请求）
+   * @param documentId 文档ID或URL
+   * @param parentBlockId 父块ID
+   * @param blockIndex 块索引
+   * @returns 操作结果
+   */
+  public async deleteDocumentBlock(documentId: string, parentBlockId: string, blockIndex: number): Promise<any> {
+    return this.deleteDocumentBlocks(documentId, parentBlockId, blockIndex, blockIndex + 1);
   }
 
   /**
@@ -522,6 +566,58 @@ export class FeishuApiService extends BaseApiService {
     } catch (error) {
       Logger.error(`创建块内容对象失败: ${error}`);
       return null;
+    }
+  }
+
+  /**
+   * 获取飞书图片资源
+   * @param mediaId 图片媒体ID
+   * @param extra 额外参数，可选
+   * @returns 图片二进制数据
+   */
+  public async getImageResource(mediaId: string, extra: string = ''): Promise<Buffer> {
+    try {
+      Logger.info(`开始获取图片资源，媒体ID: ${mediaId}`);
+      
+      if (!mediaId) {
+        throw new Error('媒体ID不能为空');
+      }
+      
+      const endpoint = `/drive/v1/medias/${mediaId}/download`;
+      const params: any = {};
+      
+      if (extra) {
+        params.extra = extra;
+      }
+      
+      // 这里需要特殊处理，因为返回的是二进制数据，不是JSON
+      const token = await this.getAccessToken();
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+      
+      Logger.debug(`请求图片资源URL: ${url}`);
+      
+      // 使用axios直接获取二进制响应
+      const response = await axios.get(url, {
+        params,
+        headers,
+        responseType: 'arraybuffer'
+      });
+      
+      // 检查响应状态
+      if (response.status !== 200) {
+        throw new Error(`获取图片资源失败，状态码: ${response.status}`);
+      }
+      
+      const imageBuffer = Buffer.from(response.data);
+      Logger.info(`图片资源获取成功，大小: ${imageBuffer.length} 字节`);
+      
+      return imageBuffer;
+    } catch (error) {
+      this.handleApiError(error, '获取图片资源失败');
+      return Buffer.from([]); // 永远不会执行到这里
     }
   }
 } 

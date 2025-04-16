@@ -545,3 +545,35 @@ curl -i -X GET 'https://open.feishu.cn/open-apis/wiki/v2/spaces/get_node?obj_typ
   "msg": "success"
 }
 ```
+
+## 12. 删除块
+* 请求接口：
+```
+curl -i -X DELETE 'https://open.feishu.cn/open-apis/docx/v1/documents/WJsOd6selovWbBxU5Ptc5DfBnOe/blocks/WJsOd6selovWbBxU5Ptc5DfBnOe/children/batch_delete?document_revision_id=-1' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer t-g1044gk6B5HSWOVH4B26WXAPRUY66HAF36KRR25E' \
+-d '{
+	"end_index": 1,
+	"start_index": 0
+}'
+```
+* 返回数据：
+```
+{
+  "code": 0,
+  "data": {
+    "client_token": "9271d423-208e-4f8c-a86f-75ff8e1efb82",
+    "document_revision_id": 3
+  },
+  "msg": "success"
+}
+```
+
+### 13. 获取图片资源
+* 请求接口
+```
+curl -i -X GET 'https://open.feishu.cn/open-apis/drive/v1/medias/boxcnrHpsg1QDqXAAAyachabcef/download?extra=%E6%97%A0' \
+-H 'Authorization: Bearer t-7f1b******8e560'
+```
+* 返回数据
+返回文件二进制流

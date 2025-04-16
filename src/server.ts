@@ -7,18 +7,22 @@ import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { formatErrorMessage } from './utils/error.js';
 import { FeishuApiService } from './services/feishuApiService.js';
 import { Logger } from './utils/logger.js';
+import { detectMimeType } from './utils/document.js';
 import {
   DocumentIdSchema,
   ParentBlockIdSchema,
   BlockIdSchema,
   IndexSchema,
   StartIndexSchema,
+  EndIndexSchema,
   AlignSchema,
   AlignSchemaWithValidation,
   TextElementsArraySchema,
   CodeLanguageSchema,
   CodeWrapSchema,
-  BlockConfigSchema
+  BlockConfigSchema,
+  MediaIdSchema,
+  MediaExtraSchema
 } from './types/feishuSchema.js';
 
 export class FeishuMcpServer {
@@ -605,6 +609,82 @@ export class FeishuMcpServer {
           const errorMessage = formatErrorMessage(error);
           return {
             content: [{ type: 'text', text: `转换Wiki文档链接失败: ${errorMessage}` }],
+          };
+        }
+      },
+    );
+
+    // 添加删除文档块工具
+    this.server.tool(
+      'delete_feishu_document_blocks',
+      'Deletes one or more consecutive blocks from a Feishu document. Use this tool to remove unwanted content, clean up document structure, or clear space before inserting new content. Supports batch deletion for efficiency. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
+      {
+        documentId: DocumentIdSchema,
+        parentBlockId: ParentBlockIdSchema,
+        startIndex: StartIndexSchema,
+        endIndex: EndIndexSchema,
+      },
+      async ({ documentId, parentBlockId, startIndex, endIndex }) => {
+        try {
+          if (!this.feishuService) {
+            return {
+              content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
+            };
+          }
+
+          Logger.info(`开始删除飞书文档块，文档ID: ${documentId}，父块ID: ${parentBlockId}，索引范围: ${startIndex}-${endIndex}`);
+          const result = await this.feishuService.deleteDocumentBlocks(documentId, parentBlockId, startIndex, endIndex);
+          Logger.info(`飞书文档块删除成功，文档修订ID: ${result.document_revision_id}`);
+
+          return {
+            content: [{ type: 'text', text: `Successfully deleted blocks from index ${startIndex} to ${endIndex - 1}` }],
+          };
+        } catch (error) {
+          Logger.error(`删除飞书文档块失败:`, error);
+          const errorMessage = formatErrorMessage(error);
+          return {
+            content: [{ type: 'text', text: `Failed to delete document blocks: ${errorMessage}` }],
+          };
+        }
+      },
+    );
+
+    // 添加获取图片资源工具
+    this.server.tool(
+      'get_feishu_image_resource',
+      'Downloads an image resource from Feishu by its media ID. Use this to retrieve images referenced in document blocks or other Feishu resources. Returns the binary image data that can be saved or processed further. For example, extract the media_id from an image block in a document, then use this tool to download the actual image.',
+      {
+        mediaId: MediaIdSchema,
+        extra: MediaExtraSchema,
+      },
+      async ({ mediaId, extra = '' }) => {
+        try {
+          if (!this.feishuService) {
+            return {
+              content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
+            };
+          }
+
+          Logger.info(`开始获取飞书图片资源，媒体ID: ${mediaId}`);
+          const imageBuffer = await this.feishuService.getImageResource(mediaId, extra);
+          Logger.info(`飞书图片资源获取成功，大小: ${imageBuffer.length} 字节`);
+
+          // 将图片数据转为Base64编码，以便在MCP协议中传输
+          const base64Image = imageBuffer.toString('base64');
+          const mimeType = detectMimeType(imageBuffer);
+
+          return {
+            content: [{ 
+              type: 'image', 
+              mimeType: mimeType,
+              data: base64Image 
+            }],
+          };
+        } catch (error) {
+          Logger.error(`获取飞书图片资源失败:`, error);
+          const errorMessage = formatErrorMessage(error);
+          return {
+            content: [{ type: 'text', text: `Failed to get image resource: ${errorMessage}` }],
           };
         }
       },

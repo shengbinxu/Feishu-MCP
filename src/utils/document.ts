@@ -79,4 +79,44 @@ export function normalizeWikiToken(input: string): string {
     throw new Error(`无法从 "${input}" 提取有效的Wiki Token`);
   }
   return token;
+}
+
+/**
+ * 根据图片二进制数据检测MIME类型
+ * @param buffer 图片二进制数据
+ * @returns MIME类型字符串
+ */
+export function detectMimeType(buffer: Buffer): string {
+  // 简单的图片格式检测，根据文件头进行判断
+  if (buffer.length < 4) {
+    return 'application/octet-stream';
+  }
+
+  // JPEG格式
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+    return 'image/jpeg';
+  }
+  // PNG格式
+  else if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+    return 'image/png';
+  }
+  // GIF格式
+  else if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+    return 'image/gif';
+  }
+  // SVG格式 - 检查字符串前缀
+  else if (buffer.length > 5 && buffer.toString('ascii', 0, 5).toLowerCase() === '<?xml' || 
+           buffer.toString('ascii', 0, 4).toLowerCase() === '<svg') {
+    return 'image/svg+xml';
+  }
+  // WebP格式
+  else if (buffer.length > 12 && 
+           buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+           buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) {
+    return 'image/webp';
+  }
+  // 默认二进制流
+  else {
+    return 'application/octet-stream';
+  }
 } 
