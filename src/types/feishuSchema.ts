@@ -163,3 +163,26 @@ export const MediaExtraSchema = z.string().optional().describe(
   'Extra parameters for media download (optional). ' +
   'These parameters are passed directly to the Feishu API and can modify how the media is returned.'
 );
+
+// 文件夹Token参数定义
+export const FolderTokenSchema = z.string().describe(
+  'Folder token (required). The unique identifier for a folder in Feishu. ' +
+  'Format is an alphanumeric string like "FWK2fMleClICfodlHHWc4Mygnhb".'
+);
+
+// 文件夹名称参数定义
+export const FolderNameSchema = z.string().describe(
+  'Folder name (required). The name for the new folder to be created.'
+);
+
+// 排序方式参数定义
+export const OrderBySchema = z.string().optional().default('EditedTime').describe(
+  'Order by field (optional). Specifies how to sort the file list. Available values: ' +
+  '"EditedTime" (default), "CreatedTime", "Name". For user-friendly display, case insensitive.'
+);
+
+// 排序方向参数定义
+export const DirectionSchema = z.string().optional().default('DESC').describe(
+  'Sort direction (optional). Specifies the sort order. Available values: ' +
+  '"DESC" (default) for descending order, "ASC" for ascending order. Case sensitive.'
+);

@@ -620,4 +620,70 @@ export class FeishuApiService extends BaseApiService {
       return Buffer.from([]); // 永远不会执行到这里
     }
   }
+
+  /**
+   * 获取飞书根文件夹信息
+   * 获取用户的根文件夹的元数据信息，包括token、id和用户id
+   * @returns 根文件夹信息
+   */
+  public async getRootFolderInfo(): Promise<any> {
+    try {
+      const endpoint = '/drive/explorer/v2/root_folder/meta';
+      const response = await this.get(endpoint);
+      Logger.debug('获取根文件夹信息成功:', response);
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '获取飞书根文件夹信息失败');
+    }
+  }
+
+  /**
+   * 获取文件夹中的文件清单
+   * @param folderToken 文件夹Token
+   * @param orderBy 排序方式，默认按修改时间排序
+   * @param direction 排序方向，默认降序
+   * @returns 文件清单信息
+   */
+  public async getFolderFileList(
+    folderToken: string, 
+    orderBy: string = 'EditedTime', 
+    direction: string = 'DESC'
+  ): Promise<any> {
+    try {
+      const endpoint = '/drive/v1/files';
+      const params = {
+        folder_token: folderToken,
+        order_by: orderBy,
+        direction: direction
+      };
+      
+      const response = await this.get(endpoint, params);
+      Logger.debug(`获取文件夹(${folderToken})中的文件清单成功，文件数量: ${response.files?.length || 0}`);
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '获取文件夹中的文件清单失败');
+    }
+  }
+
+  /**
+   * 创建文件夹
+   * @param folderToken 父文件夹Token
+   * @param name 文件夹名称
+   * @returns 创建的文件夹信息
+   */
+  public async createFolder(folderToken: string, name: string): Promise<any> {
+    try {
+      const endpoint = '/drive/v1/files/create_folder';
+      const payload = {
+        folder_token: folderToken,
+        name: name
+      };
+      
+      const response = await this.post(endpoint, payload);
+      Logger.debug(`文件夹创建成功, token: ${response.token}, url: ${response.url}`);
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '创建文件夹失败');
+    }
+  }
 } 

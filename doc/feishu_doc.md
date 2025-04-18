@@ -570,10 +570,111 @@ curl -i -X DELETE 'https://open.feishu.cn/open-apis/docx/v1/documents/WJsOd6selo
 ```
 
 ### 13. 获取图片资源
-* 请求接口
+* 请求接口：
 ```
 curl -i -X GET 'https://open.feishu.cn/open-apis/drive/v1/medias/boxcnrHpsg1QDqXAAAyachabcef/download?extra=%E6%97%A0' \
 -H 'Authorization: Bearer t-7f1b******8e560'
 ```
 * 返回数据
 返回文件二进制流
+
+### 14.获取根文件夹信息
+* 请求接口：
+```
+curl --location 'https://open.feishu.cn/open-apis/drive/explorer/v2/root_folder/meta' \
+--header 'Authorization: Bearer t-e13d5ec1954e82e458f3ce04491c54ea8c9abcef'
+```
+* 返回数据：
+```
+{
+  "code": 0,
+  "msg": "Success",
+  "data": {
+    "token": "nodbcbHUdOsS613xVzTzFEabcef",
+    "id": "7110173013420512356",
+    "user_id": "7103496998321312356"
+	}
+}
+```
+
+### 15. 获取文件夹中的文件清单
+* 请求接口：
+```
+curl -i -X GET 'https://open.feishu.cn/open-apis/drive/v1/files?direction=DESC&folder_token=C4xYfOKM5ldYzod41TUcmOLFnR6&order_by=EditedTime' \
+-H 'Authorization: Bearer t-g1044ihxDPBYG2UZWJXWUTVKXGK4OFDG62LW6TXZ'
+```
+* 返回数据：
+```
+{
+  "code": 0,
+  "data": {
+    "files": [
+      {
+        "created_time": "1744972693",
+        "modified_time": "1744972693",
+        "name": "产品优化项目",
+        "owner_id": "ou_c8eb5395f0581cf47190271e032d2e92",
+        "parent_token": "C4xYfOKM5ldYzod41TUcmOLFnR6",
+        "token": "FWK2fMleClICfodlHHWc4Mygnhb",
+        "type": "folder",
+        "url": "https://vq5iayk07bc.feishu.cn/drive/folder/FWK2fMleClICfodlHHWc4Mygnhb"
+      },
+      {
+        "created_time": "1744904770",
+        "modified_time": "1744904825",
+        "name": "Android",
+        "owner_id": "ou_14a35ea3607bb853af3a84b589161b82",
+        "parent_token": "C4xYfOKM5ldYzod41TUcmOLFnR6",
+        "token": "GMgQftudRlaSqbdLimkcxGQWnLb",
+        "type": "folder",
+        "url": "https://vq5iayk07bc.feishu.cn/drive/folder/GMgQftudRlaSqbdLimkcxGQWnLb"
+      },
+      {
+        "created_time": "1744904794",
+        "modified_time": "1744904794",
+        "name": "Kotlin",
+        "owner_id": "ou_14a35ea3607bb853af3a84b589161b82",
+        "parent_token": "C4xYfOKM5ldYzod41TUcmOLFnR6",
+        "token": "VYu5fWOYhl0PUFdaPnUcvvn2nvc",
+        "type": "folder",
+        "url": "https://vq5iayk07bc.feishu.cn/drive/folder/VYu5fWOYhl0PUFdaPnUcvvn2nvc"
+      },
+      {
+        "created_time": "1744973513",
+        "modified_time": "1744973518",
+        "name": "test",
+        "owner_id": "ou_14a35ea3607bb853af3a84b589161b82",
+        "parent_token": "C4xYfOKM5ldYzod41TUcmOLFnR6",
+        "token": "UEMld79l5oSm2Zxf8NOcFtu7n3e",
+        "type": "docx",
+        "url": "https://vq5iayk07bc.feishu.cn/docx/UEMld79l5oSm2Zxf8NOcFtu7n3e"
+      }
+    ],
+    "has_more": false
+  },
+  "msg": "success"
+}
+```
+
+### 16.新建文件夹
+* 请求接口：
+```
+curl -i -X POST 'https://open.feishu.cn/open-apis/drive/v1/files/create_folder' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer t-g1044ihxDPBYG2UZWJXWUTVKXGK4OFDG62LW6TXZ' \
+-d '{
+	"folder_token": "C4xYfOKM5ldYzod41TUcmOLFnR6",
+	"name": "产品优化项目"
+}'
+```
+* 返回数据：
+```
+{
+  "code": 0,
+  "data": {
+    "token": "FWK2fMleClICfodlHHWc4Mygnhb",
+    "url": "https://vq5iayk07bc.feishu.cn/drive/folder/FWK2fMleClICfodlHHWc4Mygnhb"
+  },
+  "msg": "success"
+}
+```
