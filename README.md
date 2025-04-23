@@ -74,7 +74,11 @@ bunx feishu-mcp --feishu-app-id=<你的飞书应用ID> --feishu-app-secret=<你�
 **已发布到smithery平台，可访问:https://smithery.ai/server/@cso1z/feishu-mcp**
 
 
-关于如何创建飞书应用和获取应用凭证的说明可以在[这里](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
+关于如何创建飞书应用和获取应用凭证的说明可以在[官方教程](https://open.feishu.cn/document/home/develop-a-bot-in-5-minutes/create-an-app)找到。
+
+
+**详细的飞书应用配置步骤**：有关注册飞书应用、配置权限、添加文档访问权限的详细指南，请参阅 [手把手教程 FEISHU_CONFIG.md](FEISHU_CONFIG.md)。
+
 
 ### 使用配置文件的工具的 JSON 配置
 
