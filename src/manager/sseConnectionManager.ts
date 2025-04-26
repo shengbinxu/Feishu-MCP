@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { Logger } from '../utils/logger';
+import { Logger } from '../utils/logger.js';
 
 /**
  * SSE连接管理器 - 负责管理所有的SSE长连接和心跳机制

@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { Logger } from './utils/logger.js';
-import { SSEConnectionManager } from './manager/sseConnectionManager';
-import { FeishuMcp } from './mcp/feishuMcp';
+import { SSEConnectionManager } from './manager/sseConnectionManager.js';
+import { FeishuMcp } from './mcp/feishuMcp.js';
 
 export class FeishuMcpServer {
   private connectionManager: SSEConnectionManager;
