@@ -135,20 +135,21 @@ export const ListBlockSchema = z.object({
 });
 
 // 块类型枚举 - 用于批量创建块工具
-export const BlockTypeEnum = z.enum(['text', 'code', 'heading', 'list']).describe(
-  "Block type (required): 'text', 'code', 'heading', or 'list'. Choose based on the content type you need to create. " +
-  "IMPORTANT: For headings use 'heading' (not 'heading1', 'heading2', etc), and specify level within options."
+export const BlockTypeEnum = z.string().describe(
+  "Block type (required). Supports: 'text', 'code', 'heading', 'list', as well as 'heading1' through 'heading9'. " +
+  "For headings, we recommend using 'heading' with level property, but 'heading1'-'heading9' are also supported."
 );
 
 // 块配置定义 - 用于批量创建块工具
 export const BlockConfigSchema = z.object({
   blockType: BlockTypeEnum,
   options: z.union([
-    z.object({ text: TextStyleBlockSchema }).describe("Text block options. Only used when blockType is 'text'."),
-    z.object({ code: CodeBlockSchema }).describe("Code block options. Only used when blockType is 'code'."),
-    z.object({ heading: HeadingBlockSchema }).describe("Heading block options. Only used when blockType is 'heading'."),
-    z.object({ list: ListBlockSchema }).describe("List block options. Only used when blockType is 'list'."),
-  ]).describe('Options for the specific block type. Must provide the corresponding options object based on blockType.'),
+    z.object({ text: TextStyleBlockSchema }).describe("Text block options. Used when blockType is 'text'."),
+    z.object({ code: CodeBlockSchema }).describe("Code block options. Used when blockType is 'code'."),
+    z.object({ heading: HeadingBlockSchema }).describe("Heading block options. Used with both 'heading' and 'headingN' formats."),
+    z.object({ list: ListBlockSchema }).describe("List block options. Used when blockType is 'list'."),
+    z.record(z.any()).describe("Fallback for any other block options")
+  ]).describe('Options for the specific block type. Provide the corresponding options object based on blockType.'),
 });
 
 // 媒体ID参数定义

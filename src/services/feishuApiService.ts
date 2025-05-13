@@ -505,6 +505,34 @@ export class FeishuApiService extends BaseApiService {
    */
   public createBlockContent(blockType: string, options: any): any {
     try {
+      // 处理特殊的heading标题格式，如heading1, heading2等
+      if (typeof blockType === 'string' && blockType.startsWith('heading')) {
+        // 使用正则表达式匹配"heading"后跟1-9的数字格式
+        const headingMatch = blockType.match(/^heading([1-9])$/);
+        if (headingMatch) {
+          // 提取数字部分，例如从"heading1"中提取"1"
+          const level = parseInt(headingMatch[1], 10);
+          
+          // 额外的安全检查，确保level在1-9范围内
+          if (level >= 1 && level <= 9) {
+            // 使用level参数创建标题块
+            if (!options || Object.keys(options).length === 0) {
+              // 没有提供选项时创建默认选项
+              options = { heading: { level, content: '', align: 1 } };
+            } else if (!('heading' in options)) {
+              // 提供了选项但没有heading字段
+              options = { heading: { level, content: '', align: 1 } };
+            } else if (options.heading && !('level' in options.heading)) {
+              // 提供了heading但没有level字段
+              options.heading.level = level;
+            }
+            blockType = BlockType.HEADING; // 将blockType转为标准的heading类型
+            
+            Logger.info(`转换特殊标题格式: ${blockType}${level} -> standard heading with level=${level}`);
+          }
+        }
+      }
+
       // 使用枚举类型来避免字符串错误
       const blockTypeEnum = blockType as BlockType;
 
@@ -514,6 +542,7 @@ export class FeishuApiService extends BaseApiService {
         options: {}
       };
 
+      // 根据块类型处理不同的选项
       switch (blockTypeEnum) {
         case BlockType.TEXT:
           if ('text' in options && options.text) {
@@ -559,7 +588,48 @@ export class FeishuApiService extends BaseApiService {
             };
           }
           break;
+          
+        default:
+          Logger.warn(`未知的块类型: ${blockType}，尝试作为标准类型处理`);
+          if ('text' in options) {
+            blockConfig.type = BlockType.TEXT;
+            const textOptions = options.text;
+            blockConfig.options = {
+              textContents: textOptions.textStyles || [],
+              align: textOptions.align || 1
+            };
+          } else if ('code' in options) {
+            blockConfig.type = BlockType.CODE;
+            const codeOptions = options.code;
+            blockConfig.options = {
+              code: codeOptions.code || '',
+              language: codeOptions.language === 0 ? 0 : (codeOptions.language || 0),
+              wrap: codeOptions.wrap || false
+            };
+          } else if ('heading' in options) {
+            blockConfig.type = BlockType.HEADING;
+            const headingOptions = options.heading;
+            blockConfig.options = {
+              text: headingOptions.content || '',
+              level: headingOptions.level || 1,
+              align: (headingOptions.align === 1 || headingOptions.align === 2 || headingOptions.align === 3)
+                ? headingOptions.align : 1
+            };
+          } else if ('list' in options) {
+            blockConfig.type = BlockType.LIST;
+            const listOptions = options.list;
+            blockConfig.options = {
+              text: listOptions.content || '',
+              isOrdered: listOptions.isOrdered || false,
+              align: (listOptions.align === 1 || listOptions.align === 2 || listOptions.align === 3)
+                ? listOptions.align : 1
+            };
+          }
+          break;
       }
+
+      // 记录调试信息
+      Logger.debug(`创建块内容: 类型=${blockConfig.type}, 选项=${JSON.stringify(blockConfig.options)}`);
 
       // 使用BlockFactory创建块
       return this.blockFactory.createBlock(blockConfig.type, blockConfig.options);

@@ -64,12 +64,12 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
   // 添加通用飞书块创建工具（支持文本、代码、标题）
   server.tool(
     'batch_create_feishu_blocks',
-    'PREFERRED: Efficiently creates multiple blocks (text, code, heading, list) in a single API call. USE THIS TOOL when creating multiple consecutive blocks at the same position - reduces API calls by up to 90%. KEY FEATURES: (1) Handles any number of blocks by auto-batching large requests (>50 blocks), (2) Creates blocks at consecutive positions in a document. CORRECT FORMAT: mcp_feishu_batch_create_feishu_blocks({documentId:"doc123",parentBlockId:"para123",startIndex:0,blocks:[{blockType:"text",options:{...}},{blockType:"heading",options:{...}}]}). For separate positions, use individual block creation tools instead. For wiki links (https://xxx.feishu.cn/wiki/xxx), first convert with convert_feishu_wiki_to_document_id tool.',
+    'PREFERRED: Efficiently creates multiple blocks (text, code, heading, list) in a single API call. USE THIS TOOL when creating multiple consecutive blocks at the same position - reduces API calls by up to 90%. KEY FEATURES: (1) Handles any number of blocks by auto-batching large requests (>50 blocks), (2) Creates blocks at consecutive positions in a document, (3) Supports direct heading level format (e.g. "heading1", "heading2") or standard "heading" type with level in options. CORRECT FORMAT: mcp_feishu_batch_create_feishu_blocks({documentId:"doc123",parentBlockId:"para123",startIndex:0,blocks:[{blockType:"text",options:{...}},{blockType:"heading1",options:{heading:{content:"Title"}}}]}). For separate positions, use individual block creation tools instead. For wiki links (https://xxx.feishu.cn/wiki/xxx), first convert with convert_feishu_wiki_to_document_id tool.',
     {
       documentId: DocumentIdSchema,
       parentBlockId: ParentBlockIdSchema,
-      startIndex: StartIndexSchema,
-      blocks: z.array(BlockConfigSchema).describe('Array of block configurations. CRITICAL: Must be a JSON array object, NOT a string. CORRECT: blocks:[{...}] - WITHOUT quotes around array. INCORRECT: blocks:"[{...}]". Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"code",options:{code:{code:"console.log()",language:30}}}]. Auto-batches requests when exceeding 50 blocks.'),
+      startIndex: IndexSchema,
+      blocks: z.array(BlockConfigSchema).describe('Array of block configurations. CRITICAL: Must be a JSON array object, NOT a string. CORRECT: blocks:[{...}] - WITHOUT quotes around array. INCORRECT: blocks:"[{...}]". Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"heading1",options:{heading:{content:"My Title"}}}]. Auto-batches requests when exceeding 50 blocks.'),
     },
     async ({ documentId, parentBlockId, startIndex = 0, blocks }) => {
       try {
@@ -109,11 +109,23 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
             const { blockType, options = {} } = blockConfig;
             
             // 创建块内容
-            const blockContent = feishuService.createBlockContent(blockType, options);
+            try {
+              const blockContent = feishuService.createBlockContent(blockType, options);
 
-            if (blockContent) {
-              blockContents.push(blockContent);
-              Logger.info(`已准备${blockType}块，内容: ${JSON.stringify(blockContent).substring(0, 100)}...`);
+              if (blockContent) {
+                blockContents.push(blockContent);
+                Logger.info(`已准备${blockType}块，内容: ${JSON.stringify(blockContent).substring(0, 100)}...`);
+              } else {
+                Logger.warn(`创建${blockType}块失败，跳过此块`);
+              }
+            } catch (error) {
+              Logger.error(`处理块类型${blockType}时出错: ${error}`);
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: `处理块类型"${blockType}"时出错: ${error}\n请检查该块类型的配置是否正确。`
+                }],
+              };
             }
           }
 
@@ -150,9 +162,21 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
               const batchBlockContents = [];
               for (const blockConfig of currentBatch) {
                 const { blockType, options = {} } = blockConfig;
-                const blockContent = feishuService.createBlockContent(blockType, options);
-                if (blockContent) {
-                  batchBlockContents.push(blockContent);
+                try {
+                  const blockContent = feishuService.createBlockContent(blockType, options);
+                  if (blockContent) {
+                    batchBlockContents.push(blockContent);
+                  } else {
+                    Logger.warn(`创建${blockType}块失败，跳过此块`);
+                  }
+                } catch (error) {
+                  Logger.error(`处理块类型${blockType}时出错: ${error}`);
+                  return {
+                    content: [{ 
+                      type: 'text', 
+                      text: `处理块类型"${blockType}"时出错: ${error}\n请检查该块类型的配置是否正确。`
+                    }],
+                  };
                 }
               }
 

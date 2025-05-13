@@ -114,9 +114,8 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
     'Retrieves the block structure information of a Feishu document. Essential to use before inserting content to understand document structure and determine correct insertion positions. Returns a detailed hierarchy of blocks with their IDs, types, and content. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
     {
       documentId: DocumentIdSchema,
-      pageSize: z.number().optional().default(500).describe('Number of blocks per page (optional). Default is 500. Used for paginating large documents. Increase for more blocks at once, decrease for faster response with fewer blocks.'),
     },
-    async ({ documentId, pageSize }) => {
+    async ({ documentId }) => {
       try {
         if (!feishuService) {
           return {
@@ -124,8 +123,8 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
           };
         }
 
-        Logger.info(`开始获取飞书文档块，文档ID: ${documentId}，页大小: ${pageSize}`);
-        const blocks = await feishuService.getDocumentBlocks(documentId, pageSize);
+        Logger.info(`开始获取飞书文档块，文档ID: ${documentId}`);
+        const blocks = await feishuService.getDocumentBlocks(documentId);
         Logger.info(`飞书文档块获取成功，共 ${blocks.length} 个块`);
 
         return {
