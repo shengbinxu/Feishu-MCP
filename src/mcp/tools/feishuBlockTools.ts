@@ -68,10 +68,10 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
     {
       documentId: DocumentIdSchema,
       parentBlockId: ParentBlockIdSchema,
-      startIndex: IndexSchema,
+      index: IndexSchema,
       blocks: z.array(BlockConfigSchema).describe('Array of block configurations. CRITICAL: Must be a JSON array object, NOT a string. CORRECT: blocks:[{...}] - WITHOUT quotes around array. INCORRECT: blocks:"[{...}]". Example: [{blockType:"text",options:{text:{textStyles:[{text:"Hello",style:{bold:true}}]}}},{blockType:"heading1",options:{heading:{content:"My Title"}}}]. Auto-batches requests when exceeding 50 blocks.'),
     },
-    async ({ documentId, parentBlockId, startIndex = 0, blocks }) => {
+    async ({ documentId, parentBlockId, index = 0, blocks }) => {
       try {
         if (!feishuService) {
           return {
@@ -99,7 +99,7 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
         // 如果块数量不超过50，直接调用一次API
         if (blocks.length <= 50) {
           Logger.info(
-            `开始批量创建飞书块，文档ID: ${documentId}，父块ID: ${parentBlockId}，块数量: ${blocks.length}，起始插入位置: ${startIndex}`);
+            `开始批量创建飞书块，文档ID: ${documentId}，父块ID: ${parentBlockId}，块数量: ${blocks.length}，起始插入位置: ${index}`);
 
           // 准备要创建的块内容数组
           const blockContents = [];
@@ -130,11 +130,15 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
           }
 
           // 批量创建所有块
-          const result = await feishuService.createDocumentBlocks(documentId, parentBlockId, blockContents, startIndex);
+          const result = await feishuService.createDocumentBlocks(documentId, parentBlockId, blockContents, index);
           Logger.info(`飞书块批量创建成功，共创建 ${blockContents.length} 个块`);
 
           return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({
+              ...result,
+              nextIndex: index + blockContents.length,
+              totalBlocksCreated: blockContents.length
+            }, null, 2) }],
           };
         } else {
           // 如果块数量超过50，需要分批处理
@@ -144,7 +148,7 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
           const batchSize = 50; // 每批最大50个
           const totalBatches = Math.ceil(blocks.length / batchSize);
           const results = [];
-          let currentStartIndex = startIndex;
+          let currentStartIndex = index;
           let createdBlocksCount = 0;
           let allBatchesSuccess = true;
 
@@ -193,7 +197,7 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
               // 计算下一批的起始位置（当前位置+已创建块数量）
               // 注意：每批成功创建后，需要将起始索引更新为当前索引 + 已创建块数量
               createdBlocksCount += batchBlockContents.length;
-              currentStartIndex = startIndex + createdBlocksCount;
+              currentStartIndex = index + createdBlocksCount;
               
               Logger.info(
                 `第 ${batchNum + 1}/${totalBatches} 批创建成功，当前已创建 ${createdBlocksCount} 个块`);
@@ -221,10 +225,11 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
             Logger.info(`所有批次创建成功，共创建 ${createdBlocksCount} 个块`);
             return {
               content: [
-                { 
-                  type: 'text', 
+                {
+                  type: 'text',
                   text: `所有飞书块创建成功，共分 ${totalBatches} 批创建了 ${createdBlocksCount} 个块。\n\n` +
-                        `最后一批结果: ${JSON.stringify(results[results.length - 1], null, 2)}`
+                        `最后一批结果: ${JSON.stringify(results[results.length - 1], null, 2)}\n\n` +
+                        `下一个索引位置: ${currentStartIndex}，总创建块数: ${createdBlocksCount}`
                 }
               ],
             };

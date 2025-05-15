@@ -245,7 +245,7 @@ export class FeishuApiService extends BaseApiService {
       const elements = textElements.map(item => ({
         text_run: {
           content: item.text,
-          text_element_style: item.style || {}
+          text_element_style: BlockFactory.applyDefaultTextStyle(item.style)
         }
       }));
 
@@ -330,8 +330,14 @@ export class FeishuApiService extends BaseApiService {
    * @returns 创建结果
    */
   public async createTextBlock(documentId: string, parentBlockId: string, textContents: Array<{text: string, style?: any}>, align: number = 1, index: number = 0): Promise<any> {
+    // 处理文本内容样式
+    const processedTextContents = textContents.map(item => ({
+      text: item.text,
+      style: BlockFactory.applyDefaultTextStyle(item.style)
+    }));
+    
     const blockContent = this.blockFactory.createTextBlock({
-      textContents,
+      textContents: processedTextContents,
       align
     });
     return this.createDocumentBlock(documentId, parentBlockId, blockContent, index);
@@ -547,8 +553,15 @@ export class FeishuApiService extends BaseApiService {
         case BlockType.TEXT:
           if ('text' in options && options.text) {
             const textOptions = options.text;
+            // 处理文本样式，应用默认样式
+            const textStyles = textOptions.textStyles || [];
+            const processedTextStyles = textStyles.map((item: any) => ({
+              text: item.text,
+              style: BlockFactory.applyDefaultTextStyle(item.style)
+            }));
+            
             blockConfig.options = {
-              textContents: textOptions.textStyles || [],
+              textContents: processedTextStyles,
               align: textOptions.align || 1
             };
           }
@@ -594,8 +607,16 @@ export class FeishuApiService extends BaseApiService {
           if ('text' in options) {
             blockConfig.type = BlockType.TEXT;
             const textOptions = options.text;
+            
+            // 处理文本样式，应用默认样式
+            const textStyles = textOptions.textStyles || [];
+            const processedTextStyles = textStyles.map((item: any) => ({
+              text: item.text,
+              style: BlockFactory.applyDefaultTextStyle(item.style)
+            }));
+            
             blockConfig.options = {
-              textContents: textOptions.textStyles || [],
+              textContents: processedTextStyles,
               align: textOptions.align || 1
             };
           } else if ('code' in options) {

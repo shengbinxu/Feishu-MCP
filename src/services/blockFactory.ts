@@ -113,6 +113,30 @@ export class BlockFactory {
   }
   
   /**
+   * 获取默认的文本元素样式
+   * @returns 默认文本元素样式
+   */
+  public static getDefaultTextElementStyle(): TextElementStyle {
+    return {
+      bold: false,
+      inline_code: false,
+      italic: false,
+      strikethrough: false,
+      underline: false
+    };
+  }
+  
+  /**
+   * 应用默认文本样式
+   * @param style 已有样式（可选）
+   * @returns 合并后的样式
+   */
+  public static applyDefaultTextStyle(style?: TextElementStyle): TextElementStyle {
+    const defaultStyle = BlockFactory.getDefaultTextElementStyle();
+    return style ? { ...defaultStyle, ...style } : defaultStyle;
+  }
+  
+  /**
    * 创建块内容
    * @param type 块类型
    * @param options 块选项
@@ -151,7 +175,7 @@ export class BlockFactory {
         elements: textContents.map(content => ({
           text_run: {
             content: content.text,
-            text_element_style: content.style || {}
+            text_element_style: BlockFactory.applyDefaultTextStyle(content.style)
           }
         })),
         style: {
@@ -172,6 +196,8 @@ export class BlockFactory {
     wrap?: boolean
   }): FeishuBlock {
     const { code, language = 0, wrap = false } = options;
+    // 校验 language 合法性，飞书API只允许1~75
+    const safeLanguage = language >= 1 && language <= 75 ? language : 1;
     
     return {
       block_type: 14, // 14表示代码块
@@ -180,18 +206,12 @@ export class BlockFactory {
           {
             text_run: {
               content: code,
-              text_element_style: {
-                bold: false,
-                inline_code: false,
-                italic: false,
-                strikethrough: false,
-                underline: false
-              }
+              text_element_style: BlockFactory.getDefaultTextElementStyle()
             }
           }
         ],
         style: {
-          language: language,
+          language: safeLanguage,
           wrap: wrap
         }
       }
@@ -229,7 +249,7 @@ export class BlockFactory {
         {
           text_run: {
             content: text,
-            text_element_style: {}
+            text_element_style: BlockFactory.getDefaultTextElementStyle()
           }
         }
       ],
@@ -269,7 +289,7 @@ export class BlockFactory {
         {
           text_run: {
             content: text,
-            text_element_style: {}
+            text_element_style: BlockFactory.getDefaultTextElementStyle()
           }
         }
       ],
