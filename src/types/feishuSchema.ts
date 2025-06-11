@@ -187,3 +187,8 @@ export const DirectionSchema = z.string().optional().default('DESC').describe(
   'Sort direction (optional). Specifies the sort order. Available values: ' +
   '"DESC" (default) for descending order, "ASC" for ascending order. Case sensitive.'
 );
+
+// 搜索关键字参数定义
+export const SearchKeySchema = z.string().describe(
+  'Search keyword (required). The keyword to search for in documents.'
+);

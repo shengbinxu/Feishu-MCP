@@ -777,4 +777,56 @@ export class FeishuApiService extends BaseApiService {
       this.handleApiError(error, '创建文件夹失败');
     }
   }
+
+  /**
+   * 搜索飞书文档
+   * @param searchKey 搜索关键字
+   * @param count 每页数量，默认50
+   * @returns 搜索结果，包含所有页的数据
+   */
+  public async searchDocuments(searchKey: string, count: number = 50): Promise<any> {
+    try {
+      Logger.info(`开始搜索文档，关键字: ${searchKey}`);
+
+      const endpoint = `//suite/docs-api/search/object`;
+      let offset = 0;
+      let allResults: any[] = [];
+      let hasMore = true;
+
+      // 循环获取所有页的数据
+      while (hasMore && offset + count < 200) {
+        const payload = {
+          search_key: searchKey,
+          docs_types: ["doc"],
+          count: count,
+          offset: offset
+        };
+
+        Logger.debug(`请求搜索，offset: ${offset}, count: ${count}`);
+        const response = await this.post(endpoint, payload);
+        
+        Logger.debug('搜索响应:', JSON.stringify(response, null, 2));
+
+        if (response && response.docs_entities) {
+          const newDocs = response.docs_entities;
+          allResults = [...allResults, ...newDocs];
+          hasMore = response.has_more || false;
+          offset += count;
+          
+          Logger.debug(`当前页获取到 ${newDocs.length} 条数据，累计 ${allResults.length} 条，总计 ${response.total} 条，hasMore: ${hasMore}`);
+        } else {
+          hasMore = false;
+          Logger.warn('搜索响应格式异常:', JSON.stringify(response, null, 2));
+        }
+      }
+
+      const resultCount = allResults.length;
+      Logger.info(`文档搜索完成，找到 ${resultCount} 个结果`);
+      return {
+        data: allResults
+      };
+    } catch (error) {
+      this.handleApiError(error, '搜索文档失败');
+    }
+  }
 } 

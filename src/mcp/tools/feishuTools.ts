@@ -6,6 +6,7 @@ import { Logger } from '../../utils/logger.js';
 import {
   DocumentIdSchema,
   BlockIdSchema,
+  SearchKeySchema,
 } from '../../types/feishuSchema.js';
 
 /**
@@ -172,4 +173,39 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
       }
     },
   );
-} 
+
+  // 添加搜索文档工具
+  server.tool(
+    'search_feishu_documents',
+    'Searches for documents in Feishu. Supports keyword-based search and returns document information including title, type, and owner. Use this tool to find specific content or related documents in your document library.',
+    {
+      searchKey: SearchKeySchema,
+    },
+    async ({ searchKey }) => {
+      try {
+        if (!feishuService) {
+          return {
+            content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration.' }],
+          };
+        }
+
+        Logger.info(`开始搜索飞书文档，关键字: ${searchKey},`);
+        const searchResult = await feishuService.searchDocuments(searchKey);
+        Logger.info(`文档搜索完成，找到 ${searchResult.size} 个结果`);
+        return {
+          content: [
+            { type: 'text', text: JSON.stringify(searchResult, null, 2) },
+          ],
+        };
+      } catch (error) {
+        Logger.error(`搜索飞书文档失败:`, error);
+        const errorMessage = formatErrorMessage(error);
+        return {
+          content: [
+            { type: 'text', text: `搜索飞书文档失败: ${errorMessage}` },
+          ],
+        };
+      }
+    },
+  );
+}
