@@ -139,6 +139,18 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
    pnpm run dev
    ```
 
+## 🌿 分支说明
+
+本项目采用主分支（main）+功能分支（feature/xxx）协作模式：
+
+- **main**  
+  稳定主线分支，始终保持可用、可部署状态。所有已验证和正式发布的功能都会合并到 main 分支。
+
+- **multi-user-token**  
+  多用户隔离与按用户授权的 Feishu Token 获取功能开发分支。该分支支持 userKey 参数、按用户获取和缓存 Token、自定义 Token 服务等高级特性，适用于需要多用户隔离和授权场景的开发与测试。
+
+> 建议日常使用 main 分支，若需体验或验证多用户隔离(即单个mcp服务支持多飞书用户使用)等新特性，可切换到 multi-user-token 分支。
+
 ## ⚙️ 项目配置
 
 ### 环境变量配置
