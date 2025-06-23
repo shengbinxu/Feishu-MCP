@@ -22,20 +22,32 @@ export const BlockIdSchema = z.string().describe(
 
 // 插入位置索引参数定义
 export const IndexSchema = z.number().describe(
-  'Insertion position index (required). Specifies where the block should be inserted. Use 0 to insert at the beginning. ' +
+  'Insertion position index (required). This index is relative to the children array of the specified parentBlockId block (not the whole document).\n' +
+  'If parentBlockId is the document root (i.e., the document ID), index refers to the position among the document content blocks (excluding the title block itself).\n' +
+  '0 means to insert as the first content block after the title.\n' +
+  'If children is empty or missing, use 0 to insert the first content block.\n' +
+  'For nested blocks, index is relative to the parent block\'s children.\n' +
+  'Note: The title block itself is not part of the children array and cannot be operated on with index.' +
+  'Specifies where the block should be inserted. Use 0 to insert at the beginning. ' +
   'Use get_feishu_document_blocks tool to understand document structure if unsure. ' +
   'For consecutive insertions, calculate next index as previous index + 1.'
 );
 
 // 起始插入位置索引参数定义
 export const StartIndexSchema = z.number().describe(
-  'Starting insertion position index (required). Specifies where the first block should be inserted. Use 0 to insert at the beginning. ' +
+  'Starting insertion position index (required). This index is relative to the children array of the specified parentBlockId block.\n' +
+  'For the document root, this means the content blocks after the title. For other blocks, it means the sub-blocks under that block.\n' +
+  'The index does not include the title block itself.' +
+  'Specifies where the first block should be inserted or deleted. Use 0 to insert at the beginning. ' +
   'Use get_feishu_document_blocks tool to understand document structure if unsure.'
 );
 
 // 结束位置索引参数定义
 export const EndIndexSchema = z.number().describe(
-  'Ending position index (required). Specifies the end of the range for deletion (exclusive). ' +
+  'Ending position index (required). This index is relative to the children array of the specified parentBlockId block.\n' +
+  'For the document root, this means the content blocks after the title. For other blocks, it means the sub-blocks under that block.\n' +
+  'The index does not include the title block itself.' +
+  'Specifies the end of the range for deletion (exclusive). ' +
   'For example, to delete blocks 2, 3, and 4, use startIndex=2, endIndex=5. ' +
   'To delete a single block at position 2, use startIndex=2, endIndex=3.'
 );
