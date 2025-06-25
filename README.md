@@ -1,12 +1,10 @@
 # 飞书 MCP 服务器
 
+
 [![npm version](https://img.shields.io/npm/v/feishu-mcp?color=blue&label=npm)](https://www.npmjs.com/package/feishu-mcp)
 [![smithery badge](https://smithery.ai/badge/@cso1z/feishu-mcp)](https://smithery.ai/server/@cso1z/feishu-mcp)
 [![wechat](https://img.shields.io/badge/交流群-wechat-brightgreen?logo=wechat)](#group-qr)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
-
-
----
 
 为 [Cursor](https://cursor.sh/)、[Windsurf](https://codeium.com/windsurf)、[Cline](https://cline.bot/) 和其他 AI 驱动的编码工具提供访问飞书文档的能力，基于 [Model Context Protocol](https://modelcontextprotocol.io/introduction) 服务器实现。
 
@@ -21,19 +19,6 @@
 本项目让你在飞书文档的日常使用流程中实现智能获取、编辑和搜索，极大提升内容处理效率和体验。
 
 > ⭐ **Star 本项目，第一时间获取最新功能和重要更新！** 关注项目可以让你不错过任何新特性、修复和优化，助你持续高效使用。你的支持也将帮助我们更好地完善和发展项目。⭐
-
-
----
-
-## 🎬 使用演示
-
-> 下方为主要功能的实际操作录屏，帮助你快速了解项目能力与交互体验：
-
-<p align="center">
-  <video src="./image/demo_video.mkv" controls poster="./image/demo.png" width="600">
-    您的浏览器不支持 video 标签。
-  </video>
-</p>
 
 
 ## 🛠️ 工具功能详情
