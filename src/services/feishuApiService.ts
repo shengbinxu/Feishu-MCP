@@ -534,7 +534,7 @@ export class FeishuApiService extends BaseApiService {
       const blockTypeEnum = blockType as BlockType;
 
       // 构建块配置
-      let blockConfig = {
+      const blockConfig = {
         type: blockTypeEnum,
         options: {}
       };
