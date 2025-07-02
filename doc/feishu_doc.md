@@ -678,3 +678,110 @@ curl -i -X POST 'https://open.feishu.cn/open-apis/drive/v1/files/create_folder' 
   "msg": "success"
 }
 ```
+
+### 17.插入图片
+#### 1. 创建图片 Block
+* 请求接口：
+url:https://open.feishu.cn/open-apis/docx/v1/documents/:document_id/blocks/:block_id/children
+```
+curl --location --request POST '{url}' \
+--header 'Authorization: {Authorization}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "index": 0,
+  "children": [
+    {
+      "block_type": 27,
+      "image": {}
+    }
+  ]
+}'
+```
+* 返回数据：
+```
+{
+    "code": 0,
+    "data": {
+        "children": [
+            {
+                "block_id": "doxcnEUmKKppwWrnUIcgZ2ibc9g",
+                // Image BlockID
+                "block_type": 27,
+                "image": {
+                    "height": 100,
+                    "token": "",
+                    "width": 100
+                },
+                "parent_id": "doxcnQxzmNsMl9rsJRZrCpGx71e"
+            }
+        ],
+        "client_token": "bc25a4f0-9a24-4ade-9ca2-6c1db43fa61d",
+        "document_revision_id": 7
+    },
+    "msg": ""
+}
+```
+#### 2. 上传图片素材
+url:https://open.feishu.cn/open-apis/drive/v1/medias/upload_all
+* 请求数据
+```
+curl --location --request POST '{url}' \
+--header 'Authorization: {Authorization}' \
+--header 'Content-Type: multipart/form-data; boundary=---7MA4YWxkTrZu0gW' \
+--form 'file= ' \ # 文件的二进制内容
+--form 'file_name="test.PNG"' \ # 图片名称
+--form 'parent_type="docx_image"' \ # 素材类型为 docx_image
+--form 'parent_node="doxcnEUmKKppwWrnUIcgZ2ibc9g"' \ # Image BlockID
+--form 'size="xxx"' # 图片大小
+```
+* 返回数据
+```
+{
+    "code": 0,
+    "data": {
+        "file_token": "boxbckbfvfcqEg22hAzN8Dh9gJd" // 图片素材 ID
+    },
+    "msg": "Success"
+}
+```
+##### 3. 设置图片 Block 的素材
+url:https://open.feishu.cn/open-apis/docx/v1/documents/:document_id/blocks/:block_id
+```
+url --location --request PATCH '{url}' \
+--header 'Authorization: {Authorization}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "replace_image": {
+        "token": "boxbckbfvfcqEg22hAzN8Dh9gJd" # 图片素材 ID
+    }
+}'
+```
+
+### 18. 搜索文档
+url:https://open.feishu.cn/open-apis/suite/docs-api/search/object
+* 请求数据
+```
+{
+"search_key": "项目", //是 指定搜索的关键字。
+"count": 10, //否 指定搜索返回的文件数量。取值范围为 [0,50]。
+}
+```
+* 返回数据
+```
+{
+    "code": 0,
+    "data": {
+        "docs_entities": [
+            {
+                "docs_token": "shtcnLkpxnlYksumuGNZM1abcef",
+                "docs_type": "doc",
+                "owner_id": "ou_b97fbe610114d9489ff3b501a71abcef",
+                "title": "项目进展周报"
+            } 
+        ],
+        "has_more": true,
+        "total": 59
+    },
+    "msg": "success"
+}
+```

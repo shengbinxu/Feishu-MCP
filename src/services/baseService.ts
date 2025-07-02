@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import FormData from 'form-data';
 import { Logger } from '../utils/logger.js';
 import { formatErrorMessage } from '../utils/error.js';
 
@@ -107,6 +108,7 @@ export abstract class BaseApiService {
    * @param data 请求数据
    * @param needsAuth 是否需要认证
    * @param additionalHeaders 附加请求头
+   * @param responseType 响应类型
    * @returns 响应数据
    */
   protected async request<T = any>(
@@ -114,7 +116,8 @@ export abstract class BaseApiService {
     method: string = 'GET', 
     data?: any, 
     needsAuth: boolean = true,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: Record<string, string>,
+    responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream'
   ): Promise<T> {
     try {
       // 构建请求URL
@@ -122,9 +125,16 @@ export abstract class BaseApiService {
       
       // 准备请求头
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...additionalHeaders
       };
+      
+      // 如果数据是FormData，合并FormData的headers
+      // 否则设置为application/json
+      if (data instanceof FormData) {
+        Object.assign(headers, data.getHeaders());
+      } else {
+        headers['Content-Type'] = 'application/json';
+      }
       
       // 添加认证令牌
       if (needsAuth) {
@@ -146,7 +156,8 @@ export abstract class BaseApiService {
         url,
         headers,
         data: method !== 'GET' ? data : undefined,
-        params: method === 'GET' ? data : undefined
+        params: method === 'GET' ? data : undefined,
+        responseType: responseType || 'json'
       };
       
       // 发送请求
@@ -158,7 +169,12 @@ export abstract class BaseApiService {
       Logger.debug(`响应头:`, response.headers);
       Logger.debug(`响应数据:`, response.data);
       
-      // 检查API错误
+      // 对于非JSON响应，直接返回数据
+      if (responseType && responseType !== 'json') {
+        return response.data as T;
+      }
+      
+      // 检查API错误（仅对JSON响应）
       if (response.data && typeof response.data.code === 'number' && response.data.code !== 0) {
         Logger.error(`API返回错误码: ${response.data.code}, 错误消息: ${response.data.msg}`);
         throw {

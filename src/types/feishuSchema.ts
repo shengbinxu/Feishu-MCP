@@ -148,9 +148,16 @@ export const ListBlockSchema = z.object({
 
 // 块类型枚举 - 用于批量创建块工具
 export const BlockTypeEnum = z.string().describe(
-  "Block type (required). Supports: 'text', 'code', 'heading', 'list', as well as 'heading1' through 'heading9'. " +
-  "For headings, we recommend using 'heading' with level property, but 'heading1'-'heading9' are also supported."
+  "Block type (required). Supports: 'text', 'code', 'heading', 'list', 'image', as well as 'heading1' through 'heading9'. " +
+  "For headings, we recommend using 'heading' with level property, but 'heading1'-'heading9' are also supported. " +
+  "For images, use 'image' to create empty image blocks that can be filled later."
 );
+
+// 图片块内容定义 - 用于批量创建块工具
+export const ImageBlockSchema = z.object({
+  width: z.number().optional().describe('Image width in pixels (optional). If not provided, default width will be used.'),
+  height: z.number().optional().describe('Image height in pixels (optional). If not provided, default height will be used.'),
+});
 
 // 块配置定义 - 用于批量创建块工具
 export const BlockConfigSchema = z.object({
@@ -160,6 +167,7 @@ export const BlockConfigSchema = z.object({
     z.object({ code: CodeBlockSchema }).describe("Code block options. Used when blockType is 'code'."),
     z.object({ heading: HeadingBlockSchema }).describe("Heading block options. Used with both 'heading' and 'headingN' formats."),
     z.object({ list: ListBlockSchema }).describe("List block options. Used when blockType is 'list'."),
+    z.object({ image: ImageBlockSchema }).describe("Image block options. Used when blockType is 'image'. Creates empty image blocks."),
     z.record(z.any()).describe("Fallback for any other block options")
   ]).describe('Options for the specific block type. Provide the corresponding options object based on blockType.'),
 });
@@ -203,4 +211,28 @@ export const DirectionSchema = z.string().optional().default('DESC').describe(
 // 搜索关键字参数定义
 export const SearchKeySchema = z.string().describe(
   'Search keyword (required). The keyword to search for in documents.'
+);
+
+// 图片路径或URL参数定义
+export const ImagePathOrUrlSchema = z.string().describe(
+  'Image path or URL (required). Supports the following formats:\n' +
+  '1. Local file absolute path: e.g., "C:\\path\\to\\image.jpg"\n' +
+  '2. HTTP/HTTPS URL: e.g., "https://example.com/image.png"\n' +
+  'The tool will automatically detect the format and handle accordingly.'
+);
+
+// 图片文件名参数定义
+export const ImageFileNameSchema = z.string().optional().describe(
+  'Image file name (optional). If not provided, a default name will be generated based on the source. ' +
+  'Should include the file extension, e.g., "image.png" or "photo.jpg".'
+);
+
+// 图片宽度参数定义
+export const ImageWidthSchema = z.number().optional().describe(
+  'Image width in pixels (optional). If not provided, the original image width will be used.'
+);
+
+// 图片高度参数定义
+export const ImageHeightSchema = z.number().optional().describe(
+  'Image height in pixels (optional). If not provided, the original image height will be used.'
 );

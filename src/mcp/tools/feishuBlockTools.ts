@@ -18,7 +18,11 @@ import {
   CodeWrapSchema,
   BlockConfigSchema,
   MediaIdSchema,
-  MediaExtraSchema
+  MediaExtraSchema,
+  ImagePathOrUrlSchema,
+  ImageFileNameSchema,
+  ImageWidthSchema,
+  ImageHeightSchema
 } from '../../types/feishuSchema.js';
 
 /**
@@ -133,12 +137,25 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
           const result = await feishuService.createDocumentBlocks(documentId, parentBlockId, blockContents, index);
           Logger.info(`飞书块批量创建成功，共创建 ${blockContents.length} 个块`);
 
+          // 检查是否有图片块（block_type=27）
+          const imageBlocks = result.children?.filter((child: any) => child.block_type === 27) || [];
+          const hasImageBlocks = imageBlocks.length > 0;
+
+          const responseData = {
+            ...result,
+            nextIndex: index + blockContents.length,
+            totalBlocksCreated: blockContents.length,
+            ...(hasImageBlocks && {
+              imageBlocksInfo: {
+                count: imageBlocks.length,
+                blockIds: imageBlocks.map((block: any) => block.block_id),
+                reminder: "检测到图片块已创建！请使用 upload_and_bind_image_to_block 工具上传图片并绑定到对应的块ID。"
+              }
+            })
+          };
+
           return {
-            content: [{ type: 'text', text: JSON.stringify({
-              ...result,
-              nextIndex: index + blockContents.length,
-              totalBlocksCreated: blockContents.length
-            }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify(responseData, null, 2) }],
           };
         } else {
           // 如果块数量超过50，需要分批处理
@@ -223,13 +240,27 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
 
           if (allBatchesSuccess) {
             Logger.info(`所有批次创建成功，共创建 ${createdBlocksCount} 个块`);
+            
+            // 检查所有批次中是否有图片块（block_type=27）
+            const allImageBlocks: any[] = [];
+            results.forEach(batchResult => {
+              const imageBlocks = batchResult.children?.filter((child: any) => child.block_type === 27) || [];
+              allImageBlocks.push(...imageBlocks);
+            });
+            const hasImageBlocks = allImageBlocks.length > 0;
+
+            const responseText = `所有飞书块创建成功，共分 ${totalBatches} 批创建了 ${createdBlocksCount} 个块。\n\n` +
+                               `最后一批结果: ${JSON.stringify(results[results.length - 1], null, 2)}\n\n` +
+                               `下一个索引位置: ${currentStartIndex}，总创建块数: ${createdBlocksCount}` +
+                               (hasImageBlocks ? `\n\n⚠️ 检测到 ${allImageBlocks.length} 个图片块已创建！\n` +
+                                `图片块IDs: ${allImageBlocks.map(block => block.block_id).join(', ')}\n` +
+                                `请使用 upload_and_bind_image_to_block 工具上传图片并绑定到对应的块ID。` : '');
+            
             return {
               content: [
                 {
                   type: 'text',
-                  text: `所有飞书块创建成功，共分 ${totalBatches} 批创建了 ${createdBlocksCount} 个块。\n\n` +
-                        `最后一批结果: ${JSON.stringify(results[results.length - 1], null, 2)}\n\n` +
-                        `下一个索引位置: ${currentStartIndex}，总创建块数: ${createdBlocksCount}`
+                  text: responseText
                 }
               ],
             };
@@ -524,6 +555,126 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
         const errorMessage = formatErrorMessage(error);
         return {
           content: [{ type: 'text', text: `Failed to get image resource: ${errorMessage}` }],
+        };
+      }
+    },
+  );
+
+  // 添加创建飞书图片块工具
+  server.tool(
+    'create_feishu_image_block',
+    'Creates a complete image block in a Feishu document by uploading an image from a local path or URL and setting it to the block. This tool handles the entire 3-step process: (1) Creates an empty image block, (2) Downloads/reads the image and uploads it as media resource, (3) Sets the image content to the block. Supports local file paths and HTTP/HTTPS URLs. Use this when you want to insert images into Feishu documents. Note: For Feishu wiki links (https://xxx.feishu.cn/wiki/xxx) you must first use convert_feishu_wiki_to_document_id tool to obtain a compatible document ID.',
+    {
+      documentId: DocumentIdSchema,
+      parentBlockId: ParentBlockIdSchema,
+      imagePathOrUrl: ImagePathOrUrlSchema,
+      fileName: ImageFileNameSchema,
+      width: ImageWidthSchema,
+      height: ImageHeightSchema,
+      index: IndexSchema
+    },
+    async ({ documentId, parentBlockId, imagePathOrUrl, fileName, width, height, index = 0 }) => {
+      try {
+        if (!feishuService) {
+          return {
+            content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
+          };
+        }
+
+        Logger.info(`开始创建飞书图片块，文档ID: ${documentId}，父块ID: ${parentBlockId}，图片源: ${imagePathOrUrl}，插入位置: ${index}`);
+        
+        const result = await feishuService.createImageBlock(documentId, parentBlockId, imagePathOrUrl, {
+          fileName,
+          width,
+          height,
+          index
+        });
+        
+        Logger.info(`飞书图片块创建成功，块ID: ${result.imageBlockId}`);
+
+        return {
+          content: [{ 
+            type: 'text', 
+            text: `图片块创建成功！\n\n块ID: ${result.imageBlockId}\n文件Token: ${result.fileToken}\n文档修订ID: ${result.documentRevisionId}\n\n完整结果:\n${JSON.stringify(result, null, 2)}`
+          }],
+        };
+      } catch (error) {
+        Logger.error(`创建飞书图片块失败:`, error);
+        const errorMessage = formatErrorMessage(error);
+        return {
+          content: [{ type: 'text', text: `创建飞书图片块失败: ${errorMessage}` }],
+        };
+      }
+    },
+  );
+
+  // 添加图片上传绑定工具
+  server.tool(
+    'upload_and_bind_image_to_block',
+    'Uploads an image from a local path or URL and binds it to an existing empty image block. This tool is used after creating image blocks with batch_create_feishu_blocks tool. It handles uploading the image media and setting the image content to the specified block ID. Supports local file paths and HTTP/HTTPS URLs.',
+    {
+      documentId: DocumentIdSchema,
+      blockId: BlockIdSchema,
+      imagePathOrUrl: ImagePathOrUrlSchema,
+      fileName: ImageFileNameSchema,
+    },
+    async ({ documentId, blockId, imagePathOrUrl, fileName }) => {
+      try {
+        if (!feishuService) {
+          return {
+            content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
+          };
+        }
+
+        Logger.info(`开始上传图片并绑定到块，文档ID: ${documentId}，块ID: ${blockId}，图片源: ${imagePathOrUrl}`);
+        
+        // 从路径或URL获取图片的Base64编码
+        const { base64: imageBase64, fileName: detectedFileName } = await (feishuService as any).getImageBase64FromPathOrUrl(imagePathOrUrl);
+        
+        // 使用提供的文件名或检测到的文件名
+        const finalFileName = fileName || detectedFileName;
+
+        // 第1步：上传图片素材
+        Logger.info('第1步：上传图片素材');
+        const uploadResult = await feishuService.uploadImageMedia(
+          imageBase64,
+          finalFileName,
+          blockId,
+        );
+
+        if (!uploadResult?.file_token) {
+          throw new Error('上传图片素材失败：无法获取file_token');
+        }
+
+        Logger.info(`图片素材上传成功，file_token: ${uploadResult.file_token}`);
+
+        // 第2步：设置图片块内容
+        Logger.info('第2步：设置图片块内容');
+        const setContentResult = await feishuService.setImageBlockContent(
+          documentId,
+          blockId,
+          uploadResult.file_token,
+        );
+
+        Logger.info('图片上传并绑定完成');
+
+        return {
+          content: [{ 
+            type: 'text', 
+            text: `图片上传并绑定成功！\n\n块ID: ${blockId}\n文件Token: ${uploadResult.file_token}\n文档修订ID: ${setContentResult.document_revision_id}\n\n完整结果:\n${JSON.stringify({
+              blockId: blockId,
+              fileToken: uploadResult.file_token,
+              uploadResult: uploadResult,
+              setContentResult: setContentResult,
+              documentRevisionId: setContentResult.document_revision_id
+            }, null, 2)}`
+          }],
+        };
+      } catch (error) {
+        Logger.error(`上传图片并绑定到块失败:`, error);
+        const errorMessage = formatErrorMessage(error);
+        return {
+          content: [{ type: 'text', text: `上传图片并绑定到块失败: ${errorMessage}` }],
         };
       }
     },

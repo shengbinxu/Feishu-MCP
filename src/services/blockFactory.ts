@@ -80,7 +80,8 @@ export enum BlockType {
   TEXT = 'text',
   CODE = 'code',
   HEADING = 'heading',
-  LIST = 'list'
+  LIST = 'list',
+  IMAGE = 'image'
 }
 
 /**
@@ -152,6 +153,8 @@ export class BlockFactory {
         return this.createHeadingBlock(options);
       case BlockType.LIST:
         return this.createListBlock(options);
+      case BlockType.IMAGE:
+        return this.createImageBlock(options);
       default:
         Logger.error(`不支持的块类型: ${type}`);
         throw new Error(`不支持的块类型: ${type}`);
@@ -303,14 +306,23 @@ export class BlockFactory {
   }
   
   /**
-   * 创建批量块内容
-   * @param blocks 块配置数组
-   * @returns 块内容数组
+   * 创建图片块内容（空图片块，需要后续设置图片资源）
+   * @param options 图片块选项
+   * @returns 图片块内容对象
    */
-  public createBatchBlocks(blocks: Array<{
-    type: BlockType,
-    options: any
-  }>): FeishuBlock[] {
-    return blocks.map(block => this.createBlock(block.type, block.options));
+  public createImageBlock(options: {
+    width?: number,
+    height?: number
+  } = {}): FeishuBlock {
+    const { width = 100, height = 100 } = options;
+    
+    return {
+      block_type: 27, // 27表示图片块
+      image: {
+        width: width,
+        height: height,
+        token: "" // 空token，需要后续通过API设置
+      }
+    };
   }
 }

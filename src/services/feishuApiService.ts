@@ -5,6 +5,9 @@ import { CacheManager } from '../utils/cache.js';
 import { ParamUtils } from '../utils/paramUtils.js';
 import { BlockFactory, BlockType } from './blockFactory.js';
 import axios from 'axios';
+import FormData from 'form-data';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * 飞书API服务类
@@ -400,18 +403,6 @@ export class FeishuApiService extends BaseApiService {
     return this.createDocumentBlock(documentId, parentBlockId, blockContent, index);
   }
 
-  /**
-   * 创建混合块
-   * @param documentId 文档ID或URL
-   * @param parentBlockId 父块ID
-   * @param blocks 块配置数组
-   * @param index 插入位置索引
-   * @returns 创建结果
-   */
-  public async createMixedBlocks(documentId: string, parentBlockId: string, blocks: Array<{type: BlockType, options: any}>, index: number = 0): Promise<any> {
-    const blockContents = blocks.map(block => this.blockFactory.createBlock(block.type, block.options));
-    return this.createDocumentBlocks(documentId, parentBlockId, blockContents, index);
-  }
 
   /**
    * 删除文档中的块，支持批量删除
@@ -601,6 +592,22 @@ export class FeishuApiService extends BaseApiService {
             };
           }
           break;
+
+        case BlockType.IMAGE:
+          if ('image' in options && options.image) {
+            const imageOptions = options.image;
+            blockConfig.options = {
+              width: imageOptions.width || 100,
+              height: imageOptions.height || 100
+            };
+          } else {
+            // 默认图片块选项
+            blockConfig.options = {
+              width: 100,
+              height: 100
+            };
+          }
+          break;
           
         default:
           Logger.warn(`未知的块类型: ${blockType}，尝试作为标准类型处理`);
@@ -645,6 +652,13 @@ export class FeishuApiService extends BaseApiService {
               align: (listOptions.align === 1 || listOptions.align === 2 || listOptions.align === 3)
                 ? listOptions.align : 1
             };
+          } else if ('image' in options) {
+            blockConfig.type = BlockType.IMAGE;
+            const imageOptions = options.image;
+            blockConfig.options = {
+              width: imageOptions.width || 100,
+              height: imageOptions.height || 100
+            };
           }
           break;
       }
@@ -681,28 +695,10 @@ export class FeishuApiService extends BaseApiService {
         params.extra = extra;
       }
       
-      // 这里需要特殊处理，因为返回的是二进制数据，不是JSON
-      const token = await this.getAccessToken();
-      const url = `${this.getBaseUrl()}${endpoint}`;
-      const headers = {
-        'Authorization': `Bearer ${token}`
-      };
+      // 使用通用的request方法获取二进制响应
+      const response = await this.request<ArrayBuffer>(endpoint, 'GET', params, true, {}, 'arraybuffer');
       
-      Logger.debug(`请求图片资源URL: ${url}`);
-      
-      // 使用axios直接获取二进制响应
-      const response = await axios.get(url, {
-        params,
-        headers,
-        responseType: 'arraybuffer'
-      });
-      
-      // 检查响应状态
-      if (response.status !== 200) {
-        throw new Error(`获取图片资源失败，状态码: ${response.status}`);
-      }
-      
-      const imageBuffer = Buffer.from(response.data);
+      const imageBuffer = Buffer.from(response);
       Logger.info(`图片资源获取成功，大小: ${imageBuffer.length} 字节`);
       
       return imageBuffer;
@@ -829,4 +825,281 @@ export class FeishuApiService extends BaseApiService {
       this.handleApiError(error, '搜索文档失败');
     }
   }
-} 
+
+  /**
+   * 上传图片素材到飞书
+   * @param imageBase64 图片的Base64编码
+   * @param fileName 图片文件名，如果不提供则自动生成
+   * @param parentBlockId 图片块ID
+   * @returns 上传结果，包含file_token
+   */
+  public async uploadImageMedia(
+    imageBase64: string,
+    fileName: string,
+    parentBlockId: string,
+  ): Promise<any> {
+    try {
+      const endpoint = '/drive/v1/medias/upload_all';
+
+      // 将Base64转换为Buffer
+      const imageBuffer = Buffer.from(imageBase64, 'base64');
+      const imageSize = imageBuffer.length;
+
+      // 如果没有提供文件名，根据Base64数据生成默认文件名
+      if (!fileName) {
+        // 简单检测图片格式
+        if (imageBase64.startsWith('/9j/')) {
+          fileName = `image_${Date.now()}.jpg`;
+        } else if (imageBase64.startsWith('iVBORw0KGgo')) {
+          fileName = `image_${Date.now()}.png`;
+        } else if (imageBase64.startsWith('R0lGODlh')) {
+          fileName = `image_${Date.now()}.gif`;
+        } else {
+          fileName = `image_${Date.now()}.png`; // 默认PNG格式
+        }
+      }
+
+      Logger.info(
+        `开始上传图片素材，文件名: ${fileName}，大小: ${imageSize} 字节，关联块ID: ${parentBlockId}`,
+      );
+
+      // 验证图片大小（可选的业务检查）
+      if (imageSize > 20 * 1024 * 1024) {
+        // 20MB限制
+        Logger.warn(`图片文件过大: ${imageSize} 字节，建议小于20MB`);
+      }
+
+      // 使用FormData构建multipart/form-data请求
+      const formData = new FormData();
+
+      // file字段传递图片的二进制数据流
+      // Buffer是Node.js中的二进制数据类型，form-data库会将其作为文件流处理
+      formData.append('file', imageBuffer, {
+        filename: fileName,
+        contentType: this.getMimeTypeFromFileName(fileName),
+        knownLength: imageSize, // 明确指定文件大小，避免流读取问题
+      });
+
+      // 飞书API要求的其他表单字段
+      formData.append('file_name', fileName);
+      formData.append('parent_type', 'docx_image'); // 固定值：文档图片类型
+      formData.append('parent_node', parentBlockId); // 关联的图片块ID
+      formData.append('size', imageSize.toString()); // 文件大小（字节，字符串格式）
+
+      // 使用通用的post方法发送请求
+      const response = await this.post(endpoint, formData);
+
+      Logger.info(
+        `图片素材上传成功，file_token: ${response.file_token}`,
+      );
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '上传图片素材失败');
+    }
+  }
+
+  /**
+   * 设置图片块的素材内容
+   * @param documentId 文档ID
+   * @param imageBlockId 图片块ID
+   * @param fileToken 图片素材的file_token
+   * @returns 设置结果
+   */
+  public async setImageBlockContent(
+    documentId: string,
+    imageBlockId: string,
+    fileToken: string,
+  ): Promise<any> {
+    try {
+      const normalizedDocId = ParamUtils.processDocumentId(documentId);
+      const endpoint = `/docx/v1/documents/${normalizedDocId}/blocks/${imageBlockId}`;
+
+      const payload = {
+        replace_image: {
+          token: fileToken,
+        },
+      };
+
+      Logger.info(
+        `开始设置图片块内容，文档ID: ${normalizedDocId}，块ID: ${imageBlockId}，file_token: ${fileToken}`,
+      );
+      const response = await this.patch(endpoint, payload);
+
+      Logger.info('图片块内容设置成功');
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '设置图片块内容失败');
+    }
+  }
+
+  /**
+   * 创建完整的图片块（包括创建空块、上传图片、设置内容的完整流程）
+   * @param documentId 文档ID
+   * @param parentBlockId 父块ID
+   * @param imagePathOrUrl 图片路径或URL
+   * @param options 图片选项
+   * @returns 创建结果
+   */
+  public async createImageBlock(
+    documentId: string,
+    parentBlockId: string,
+    imagePathOrUrl: string,
+    options: {
+      fileName?: string;
+      width?: number;
+      height?: number;
+      index?: number;
+    } = {},
+  ): Promise<any> {
+    try {
+      const { fileName: providedFileName, width, height, index = 0 } = options;
+
+      Logger.info(
+        `开始创建图片块，文档ID: ${documentId}，父块ID: ${parentBlockId}，图片源: ${imagePathOrUrl}，插入位置: ${index}`,
+      );
+
+      // 从路径或URL获取图片的Base64编码
+      const { base64: imageBase64, fileName: detectedFileName } = await this.getImageBase64FromPathOrUrl(imagePathOrUrl);
+      
+      // 使用提供的文件名或检测到的文件名
+      const finalFileName = providedFileName || detectedFileName;
+
+      // 第1步：创建空图片块
+      Logger.info('第1步：创建空图片块');
+      const imageBlockContent = this.blockFactory.createImageBlock({
+        width,
+        height,
+      });
+      const createBlockResult = await this.createDocumentBlock(
+        documentId,
+        parentBlockId,
+        imageBlockContent,
+        index,
+      );
+
+      if (!createBlockResult?.children?.[0]?.block_id) {
+        throw new Error('创建空图片块失败：无法获取块ID');
+      }
+
+      const imageBlockId = createBlockResult.children[0].block_id;
+      Logger.info(`空图片块创建成功，块ID: ${imageBlockId}`);
+
+      // 第2步：上传图片素材
+      Logger.info('第2步：上传图片素材');
+      const uploadResult = await this.uploadImageMedia(
+        imageBase64,
+        finalFileName,
+        imageBlockId,
+      );
+
+      if (!uploadResult?.file_token) {
+        throw new Error('上传图片素材失败：无法获取file_token');
+      }
+
+      Logger.info(`图片素材上传成功，file_token: ${uploadResult.file_token}`);
+
+      // 第3步：设置图片块内容
+      Logger.info('第3步：设置图片块内容');
+      const setContentResult = await this.setImageBlockContent(
+        documentId,
+        imageBlockId,
+        uploadResult.file_token,
+      );
+
+      Logger.info('图片块创建完成');
+
+      // 返回综合结果
+      return {
+        imageBlock: createBlockResult.children[0],
+        imageBlockId: imageBlockId,
+        fileToken: uploadResult.file_token,
+        uploadResult: uploadResult,
+        setContentResult: setContentResult,
+        documentRevisionId:
+          setContentResult.document_revision_id ||
+          createBlockResult.document_revision_id,
+      };
+    } catch (error) {
+      this.handleApiError(error, '创建图片块失败');
+    }
+  }
+
+  /**
+   * 根据文件名获取MIME类型
+   * @param fileName 文件名
+   * @returns MIME类型
+   */
+  private getMimeTypeFromFileName(fileName: string): string {
+    const extension = fileName.toLowerCase().split('.').pop();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      case 'bmp':
+        return 'image/bmp';
+      case 'svg':
+        return 'image/svg+xml';
+      default:
+        return 'image/png'; // 默认PNG
+    }
+  }
+
+  /**
+   * 从路径或URL获取图片的Base64编码
+   * @param imagePathOrUrl 图片路径或URL
+   * @returns 图片的Base64编码和文件名
+   */
+  private async getImageBase64FromPathOrUrl(imagePathOrUrl: string): Promise<{ base64: string; fileName: string }> {
+    try {
+      let imageBuffer: Buffer;
+      let fileName: string;
+
+      // 判断是否为HTTP/HTTPS URL
+      if (imagePathOrUrl.startsWith('http://') || imagePathOrUrl.startsWith('https://')) {
+        Logger.info(`从URL获取图片: ${imagePathOrUrl}`);
+        
+        // 从URL下载图片
+        const response = await axios.get(imagePathOrUrl, {
+          responseType: 'arraybuffer',
+          timeout: 30000, // 30秒超时
+        });
+        
+        imageBuffer = Buffer.from(response.data);
+        
+        // 从URL中提取文件名
+        const urlPath = new URL(imagePathOrUrl).pathname;
+        fileName = path.basename(urlPath) || `image_${Date.now()}.png`;
+        
+        Logger.info(`从URL成功获取图片，大小: ${imageBuffer.length} 字节，文件名: ${fileName}`);
+      } else {
+        // 本地文件路径
+        Logger.info(`从本地路径读取图片: ${imagePathOrUrl}`);
+        
+        // 检查文件是否存在
+        if (!fs.existsSync(imagePathOrUrl)) {
+          throw new Error(`图片文件不存在: ${imagePathOrUrl}`);
+        }
+        
+        // 读取文件
+        imageBuffer = fs.readFileSync(imagePathOrUrl);
+        fileName = path.basename(imagePathOrUrl);
+        
+        Logger.info(`从本地路径成功读取图片，大小: ${imageBuffer.length} 字节，文件名: ${fileName}`);
+      }
+
+      // 转换为Base64
+      const base64 = imageBuffer.toString('base64');
+      
+      return { base64, fileName };
+    } catch (error) {
+      Logger.error(`获取图片失败: ${error}`);
+      throw new Error(`获取图片失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+}
