@@ -16,38 +16,39 @@
 3. **智能创建与编辑**：可自动创建新文档、批量生成和编辑内容，满足多样化写作需求。
 4. **高效检索与搜索**：内置关键字搜索，帮助你在大量文档中迅速找到目标信息。
 
-本项目让你在飞书文档的日常使用流程中实现智能获取、编辑和搜索，极大提升内容处理效率和体验。
+本项目让你在飞书文档的日常使用流程中实现智能获取、编辑和搜索，提升内容处理效率和体验。
 
 > ⭐ **Star 本项目，第一时间获取最新功能和重要更新！** 关注项目可以让你不错过任何新特性、修复和优化，助你持续高效使用。你的支持也将帮助我们更好地完善和发展项目。⭐
 
+---
 
 ## 🛠️ 工具功能详情
 
-| 功能类别 | 工具名称                                 | 描述          | 使用场景          | 状态 |
-|---------|--------------------------------------|-------------|---------------|------|
-| **文档管理** | `create_feishu_document`             | 创建新的飞书文档    | 从零开始创建文档      | ✅ 已完成 |
-| | `get_feishu_document_info`           | 获取文档基本信息    | 验证文档存在性和权限    | ✅ 已完成 |
-| | `get_feishu_document_content`        | 获取文档纯文本内容   | 内容分析和处理       | ✅ 已完成 |
-| | `get_feishu_document_blocks`         | 获取文档块结构     | 了解文档层级结构      | ✅ 已完成 |
-| | `get_feishu_block_content`           | 获取特定块内容     | 检查块属性和格式      | ✅ 已完成 |
-| **内容编辑** | `batch_create_feishu_blocks`         | 批量创建多个块     | 高效创建连续内容      | ✅ 已完成 |
-| | `update_feishu_block_text`           | 更新块文本内容     | 修改现有内容        | ✅ 已完成 |
-| | `create_feishu_text_block`           | 创建单个文本块     | 精确样式控制的文本创建   | ✅ 已完成 |
-| | `create_feishu_code_block`           | 创建代码块       | 技术文档和代码示例     | ✅ 已完成 |
-| | `create_feishu_heading_block`        | 创建标题块       | 章节标题和层级结构     | ✅ 已完成 |
-| | `create_feishu_list_block`           | 创建列表块       | 有序和无序列表创建     | ✅ 已完成 |
-| | `delete_feishu_document_blocks`      | 删除文档块       | 清理和重构文档内容     | ✅ 已完成 |
-| **文件夹管理** | `get_feishu_root_folder_info`        | 获取根文件夹信息    | 获取基础文件夹信息     | ✅ 已完成 |
-| | `get_feishu_folder_files`            | 获取文件夹文件列表   | 浏览文件夹内容       | ✅ 已完成 |
-| | `create_feishu_folder`               | 创建新文件夹      | 组织文档结构        | ✅ 已完成 |
-| **搜索功能** | `search_feishu_documents`            | 搜索文档        | 查找特定内容        | ✅ 已完成 |
-| **工具功能** | `convert_feishu_wiki_to_document_id` | Wiki链接转换    | 将Wiki链接转为文档ID | ✅ 已完成 |
-| | `get_feishu_image_resource`          | 获取图片资源      | 下载文档中的图片      | ✅ 已完成 |
-| **高级功能** | 表格操作                                 | 创建和编辑表格     | 结构化数据展示       | 🚧 计划中 |
-| | 图表插入                                 | 支持各类数据可视化图表 | 数据展示和分析       | 🚧 计划中 |
-| | 流程图                                  | 支持流程图和思维导图  | 流程梳理和可视化      | 🚧 计划中 |
-| | 图片插入                                 | 支持插入各种类型图片  | 修改文档内容        | 🚧 计划中 |
-| | 公式支持                                 | 支持数学公式和科学符号 | 学术和技术文档       | 🚧 计划中 |
+| 功能类别 | 工具名称                                                         | 描述          | 使用场景          | 状态 |
+|---------|--------------------------------------------------------------|-------------|---------------|------|
+| **文档管理** | `create_feishu_document`                                     | 创建新的飞书文档    | 从零开始创建文档      | ✅ 已完成 |
+| | `get_feishu_document_info`                                   | 获取文档基本信息    | 验证文档存在性和权限    | ✅ 已完成 |
+| | `get_feishu_document_content`                                | 获取文档纯文本内容   | 内容分析和处理       | ✅ 已完成 |
+| | `get_feishu_document_blocks`                                 | 获取文档块结构     | 了解文档层级结构      | ✅ 已完成 |
+| | `get_feishu_block_content`                                   | 获取特定块内容     | 检查块属性和格式      | ✅ 已完成 |
+| **内容编辑** | `batch_create_feishu_blocks`                                 | 批量创建多个块     | 高效创建连续内容      | ✅ 已完成 |
+| | `update_feishu_block_text`                                   | 更新块文本内容     | 修改现有内容        | ✅ 已完成 |
+| | `create_feishu_text_block`                                   | 创建单个文本块     | 精确样式控制的文本创建   | ✅ 已完成 |
+| | `create_feishu_code_block`                                   | 创建代码块       | 技术文档和代码示例     | ✅ 已完成 |
+| | `create_feishu_heading_block`                                | 创建标题块       | 章节标题和层级结构     | ✅ 已完成 |
+| | `create_feishu_list_block`                                   | 创建列表块       | 有序和无序列表创建     | ✅ 已完成 |
+| | `delete_feishu_document_blocks`                              | 删除文档块       | 清理和重构文档内容     | ✅ 已完成 |
+| **文件夹管理** | `get_feishu_root_folder_info`                                | 获取根文件夹信息    | 获取基础文件夹信息     | ✅ 已完成 |
+| | `get_feishu_folder_files`                                    | 获取文件夹文件列表   | 浏览文件夹内容       | ✅ 已完成 |
+| | `create_feishu_folder`                                       | 创建新文件夹      | 组织文档结构        | ✅ 已完成 |
+| **搜索功能** | `search_feishu_documents`                                    | 搜索文档        | 查找特定内容        | ✅ 已完成 |
+| **工具功能** | `convert_feishu_wiki_to_document_id`                         | Wiki链接转换    | 将Wiki链接转为文档ID | ✅ 已完成 |
+| | `get_feishu_image_resource`                                  | 获取图片资源      | 下载文档中的图片      | ✅ 已完成 |
+| **高级功能** | 表格操作                                                         | 创建和编辑表格     | 结构化数据展示       | 🚧 计划中 |
+| | 图表插入                                                         | 支持各类数据可视化图表 | 数据展示和分析       | 🚧 计划中 |
+| | 流程图                                                          | 支持流程图和思维导图  | 流程梳理和可视化      | 🚧 计划中 |
+| 图片插入  | `create_feishu_image_block`、`upload_and_bind_image_to_block` | 支持插入本地和远程图片 | 修改文档内容 | ✅ 已完成 |
+| | 公式支持                                                         | 支持数学公式和科学符号 | 学术和技术文档       | 🚧 计划中 |
 
 ### 🎨 支持的样式功能
 
@@ -57,6 +58,9 @@
 - **标题级别**：支持1-9级标题
 - **代码块**：支持多种编程语言语法高亮
 - **列表**：有序列表（编号）、无序列表（项目符号）
+- **图片**：支持本地图片和网络图片
+
+---
 
 ## 🔧 飞书配置教程
 
@@ -66,6 +70,7 @@
 
 **详细的飞书应用配置步骤**：有关注册飞书应用、配置权限、添加文档访问权限的详细指南，请参阅 [手把手教程 FEISHU_CONFIG.md](FEISHU_CONFIG.md)。
 
+---
 
 ## 🏃‍♂️ 快速开始
 
@@ -80,6 +85,20 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 **已发布到 Smithery 平台，可访问：** https://smithery.ai/server/@cso1z/feishu-mcp
 
 ### 方式三：本地运行
+
+
+#### 🌿 分支说明
+
+本项目采用主分支（main）+功能分支（feature/xxx）协作模式：
+
+- **main**  
+  稳定主线分支，始终保持可用、可部署状态。所有已验证和正式发布的功能都会合并到 main 分支。
+
+- **multi-user-token** 
+
+  多用户隔离与按用户授权的 Feishu Token 获取功能开发分支。该分支支持 userKey 参数、按用户获取和缓存 Token、自定义 Token 服务等高级特性，适用于需要多用户隔离和授权场景的开发与测试。
+  > ⚠️ 该分支为 beta 版本，功能更新相较 main 分支可能会有延后。如有相关需求请在 issue 区留言，我会优先同步最新功能到该分支。
+  
 
 1. **克隆仓库**
    ```bash
@@ -139,18 +158,6 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
    pnpm run dev
    ```
 
-## 🌿 分支说明
-
-本项目采用主分支（main）+功能分支（feature/xxx）协作模式：
-
-- **main**  
-  稳定主线分支，始终保持可用、可部署状态。所有已验证和正式发布的功能都会合并到 main 分支。
-
-- **multi-user-token**  
-  多用户隔离与按用户授权的 Feishu Token 获取功能开发分支。该分支支持 userKey 参数、按用户获取和缓存 Token、自定义 Token 服务等高级特性，适用于需要多用户隔离和授权场景的开发与测试。
-
-> 建议日常使用 main 分支，若需体验或验证多用户隔离(即单个mcp服务支持多飞书用户使用)等新特性，可切换到 multi-user-token 分支。
-
 ## ⚙️ 项目配置
 
 ### 环境变量配置
@@ -195,6 +202,20 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
    }
 }
 ```
+---
+
+## 📝 使用贴士（重要）
+
+1. ### **推荐指定文件夹**：
+   新建文档时，建议主动提供飞书文件夹 token（可为具体文件夹或根文件夹），这样可以更高效地定位和管理文档。如果不确定具体的子文件夹，可以让LLM自动在你指定的文件夹下查找最合适的子目录来新建文档。
+   
+   > **如何获取文件夹 token？**
+   > 打开飞书文件夹页面，复制链接（如 `https://.../drive/folder/xxxxxxxxxxxxxxxxxxxxxx`），token 就是链接最后的那一串字符（如 `xxxxxxxxxxxxxxxxxxxxxx`，请勿泄露真实 token）。
+
+2. ### **图片上传路径说明**：
+   本地运行 MCP 时，图片路径既支持本地绝对路径，也支持 http/https 网络图片；如在服务器环境，仅支持网络图片链接（由于cursor调用mcp时参数长度限制，暂不支持直接上传图片文件本体，请使用图片路径或链接方式上传）。
+
+---
 
 ## 🚨 故障排查
 
@@ -217,6 +238,7 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 - **权限不足**：参考[云文档常见问题](https://open.feishu.cn/document/ukTMukTMukTM/uczNzUjL3czM14yN3MTN)
 - **知识库访问问题**：参考[知识库常见问题](https://open.feishu.cn/document/server-docs/docs/wiki-v2/wiki-qa)
 
+---
 
 ## 💖 支持项目
 
@@ -237,8 +259,3 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！如果你在使用过程中遇到问题或有改进建议，也欢迎随时告诉我们。
-
-## 📄 许可证
-
-MIT License
-
