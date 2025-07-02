@@ -5,8 +5,6 @@ import { Logger } from '../../utils/logger.js';
 import {
   FolderTokenSchema,
   FolderNameSchema,
-  OrderBySchema,
-  DirectionSchema
 } from '../../types/feishuSchema.js';
 
 /**
@@ -51,10 +49,8 @@ export function registerFeishuFolderTools(server: McpServer, feishuService: Feis
     'Retrieves a list of files and subfolders in a specified folder. Use this to explore folder contents, view file metadata, and get URLs and tokens for further operations.',
     {
       folderToken: FolderTokenSchema,
-      orderBy: OrderBySchema,
-      direction: DirectionSchema
     },
-    async ({ folderToken, orderBy = 'EditedTime', direction = 'DESC' }) => {
+    async ({ folderToken, }) => {
       try {
         if (!feishuService) {
           return {
@@ -62,8 +58,8 @@ export function registerFeishuFolderTools(server: McpServer, feishuService: Feis
           };
         }
 
-        Logger.info(`开始获取飞书文件夹中的文件清单，文件夹Token: ${folderToken}，排序方式: ${orderBy}，排序方向: ${direction}`);
-        const fileList = await feishuService.getFolderFileList(folderToken, orderBy, direction);
+        Logger.info(`开始获取飞书文件夹中的文件清单，文件夹Token: ${folderToken}`);
+        const fileList = await feishuService.getFolderFileList(folderToken);
         Logger.info(`飞书文件夹中的文件清单获取成功，共 ${fileList.files?.length || 0} 个文件`);
 
         return {

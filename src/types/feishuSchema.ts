@@ -196,18 +196,6 @@ export const FolderNameSchema = z.string().describe(
   'Folder name (required). The name for the new folder to be created.'
 );
 
-// 排序方式参数定义
-export const OrderBySchema = z.string().optional().default('EditedTime').describe(
-  'Order by field (optional). Specifies how to sort the file list. Available values: ' +
-  '"EditedTime" (default), "CreatedTime", "Name". For user-friendly display, case insensitive.'
-);
-
-// 排序方向参数定义
-export const DirectionSchema = z.string().optional().default('DESC').describe(
-  'Sort direction (optional). Specifies the sort order. Available values: ' +
-  '"DESC" (default) for descending order, "ASC" for ascending order. Case sensitive.'
-);
-
 // 搜索关键字参数定义
 export const SearchKeySchema = z.string().describe(
   'Search keyword (required). The keyword to search for in documents.'
