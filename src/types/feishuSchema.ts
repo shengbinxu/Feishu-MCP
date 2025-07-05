@@ -85,11 +85,17 @@ export const TextStyleSchema = z.object(TextStylePropertiesSchema).optional().de
   'Text style settings. Explicitly set style properties instead of relying on Markdown syntax conversion.'
 );
 
-// 文本内容单元定义
-export const TextElementSchema = z.object({
-  text: z.string().describe('Text content. Provide plain text without markdown syntax; use style object for formatting.'),
-  style: TextStyleSchema
-});
+// 文本内容单元定义 - 支持普通文本和公式元素
+export const TextElementSchema = z.union([
+  z.object({
+    text: z.string().describe('Text content. Provide plain text without markdown syntax; use style object for formatting.'),
+    style: TextStyleSchema
+  }).describe('Regular text element with optional styling.'),
+  z.object({
+    equation: z.string().describe('Mathematical equation content. The formula or expression to display. Format: LaTeX.'),
+    style: TextStyleSchema
+  }).describe('Mathematical equation element with optional styling.')
+]);
 
 // 文本内容数组定义
 export const TextElementsArraySchema = z.array(TextElementSchema).describe(
@@ -116,12 +122,7 @@ export const CodeWrapSchema = z.boolean().optional().default(false).describe(
 
 // 文本样式段落定义 - 用于批量创建块工具
 export const TextStyleBlockSchema = z.object({
-  textStyles: z.array(
-    z.object({
-      text: z.string().describe('Text segment content. The actual text to display.'),
-      style: TextStyleSchema
-    })
-  ).describe('Array of text content objects with styles. A block can contain multiple text segments with different styles. Example: [{text:"Hello",style:{bold:true}},{text:" World",style:{italic:true}}]'),
+  textStyles: z.array(TextElementSchema).describe('Array of text content objects with styles. A block can contain multiple text segments with different styles, including both regular text and equations. Example: [{text:"Hello",style:{bold:true}},{equation:"1+2=3",style:{}}]'),
   align: z.number().optional().default(1).describe('Text alignment: 1 for left (default), 2 for center, 3 for right.'),
 });
 
@@ -150,7 +151,8 @@ export const ListBlockSchema = z.object({
 export const BlockTypeEnum = z.string().describe(
   "Block type (required). Supports: 'text', 'code', 'heading', 'list', 'image', as well as 'heading1' through 'heading9'. " +
   "For headings, we recommend using 'heading' with level property, but 'heading1'-'heading9' are also supported. " +
-  "For images, use 'image' to create empty image blocks that can be filled later."
+  "For images, use 'image' to create empty image blocks that can be filled later. " +
+  "For text blocks, you can include both regular text and equation elements in the same block."
 );
 
 // 图片块内容定义 - 用于批量创建块工具

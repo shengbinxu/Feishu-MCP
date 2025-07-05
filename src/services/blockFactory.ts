@@ -29,6 +29,19 @@ export interface TextContent {
 }
 
 /**
+ * 公式内容接口
+ */
+export interface EquationContent {
+  equation: string;      // 公式内容
+  style?: TextElementStyle; // 文本样式
+}
+
+/**
+ * 文本元素类型 - 可以是普通文本或公式
+ */
+export type TextElement = TextContent | EquationContent;
+
+/**
  * 文本块接口
  */
 export interface TextBlock extends FeishuBlock {
@@ -167,7 +180,7 @@ export class BlockFactory {
    * @returns 文本块内容对象
    */
   public createTextBlock(options: {
-    textContents: Array<{text: string, style?: TextElementStyle}>,
+    textContents: Array<TextElement>,
     align?: AlignType
   }): FeishuBlock {
     const { textContents, align = AlignType.LEFT } = options;
@@ -175,14 +188,28 @@ export class BlockFactory {
     return {
       block_type: 2, // 2表示文本块
       text: {
-        elements: textContents.map(content => ({
-          text_run: {
-            content: content.text,
-            text_element_style: BlockFactory.applyDefaultTextStyle(content.style)
+        elements: textContents.map(content => {
+          // 检查是否是公式元素
+          if ('equation' in content) {
+            return {
+              equation: {
+                content: content.equation,
+                text_element_style: BlockFactory.applyDefaultTextStyle(content.style)
+              }
+            };
+          } else {
+            // 普通文本元素
+            return {
+              text_run: {
+                content: content.text,
+                text_element_style: BlockFactory.applyDefaultTextStyle(content.style)
+              }
+            };
           }
-        })),
+        }),
         style: {
           align: align, // 1 居左，2 居中，3 居右
+          folded: false
         }
       }
     };

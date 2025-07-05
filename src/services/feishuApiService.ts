@@ -236,21 +236,32 @@ export class FeishuApiService extends BaseApiService {
    * 更新块文本内容
    * @param documentId 文档ID或URL
    * @param blockId 块ID
-   * @param textElements 文本元素数组
+   * @param textElements 文本元素数组，支持普通文本和公式元素
    * @returns 更新结果
    */
-  public async updateBlockTextContent(documentId: string, blockId: string, textElements: Array<{text: string, style?: any}>): Promise<any> {
+  public async updateBlockTextContent(documentId: string, blockId: string, textElements: Array<{text?: string, equation?: string, style?: any}>): Promise<any> {
     try {
       const docId = ParamUtils.processDocumentId(documentId);
       const endpoint = `/docx/v1/documents/${docId}/blocks/${blockId}?document_revision_id=-1`;
       Logger.debug(`准备请求API端点: ${endpoint}`);
 
-      const elements = textElements.map(item => ({
-        text_run: {
-          content: item.text,
-          text_element_style: BlockFactory.applyDefaultTextStyle(item.style)
+      const elements = textElements.map(item => {
+        if (item.equation !== undefined) {
+          return {
+            equation: {
+              content: item.equation,
+              text_element_style: BlockFactory.applyDefaultTextStyle(item.style)
+            }
+          };
+        } else {
+          return {
+            text_run: {
+              content: item.text || '',
+              text_element_style: BlockFactory.applyDefaultTextStyle(item.style)
+            }
+          };
         }
-      }));
+      });
 
       const data = {
         update_text_elements: {
@@ -327,17 +338,26 @@ export class FeishuApiService extends BaseApiService {
    * 创建文本块
    * @param documentId 文档ID或URL
    * @param parentBlockId 父块ID
-   * @param textContents 文本内容数组
+   * @param textContents 文本内容数组，支持普通文本和公式元素
    * @param align 对齐方式，1为左对齐，2为居中，3为右对齐
    * @param index 插入位置索引
    * @returns 创建结果
    */
-  public async createTextBlock(documentId: string, parentBlockId: string, textContents: Array<{text: string, style?: any}>, align: number = 1, index: number = 0): Promise<any> {
-    // 处理文本内容样式
-    const processedTextContents = textContents.map(item => ({
-      text: item.text,
-      style: BlockFactory.applyDefaultTextStyle(item.style)
-    }));
+  public async createTextBlock(documentId: string, parentBlockId: string, textContents: Array<{text?: string, equation?: string, style?: any}>, align: number = 1, index: number = 0): Promise<any> {
+    // 处理文本内容样式，支持普通文本和公式元素
+    const processedTextContents = textContents.map(item => {
+      if (item.equation !== undefined) {
+        return {
+          equation: item.equation,
+          style: BlockFactory.applyDefaultTextStyle(item.style)
+        };
+      } else {
+        return {
+          text: item.text || '',
+          style: BlockFactory.applyDefaultTextStyle(item.style)
+        };
+      }
+    });
     
     const blockContent = this.blockFactory.createTextBlock({
       textContents: processedTextContents,
@@ -544,12 +564,21 @@ export class FeishuApiService extends BaseApiService {
         case BlockType.TEXT:
           if ('text' in options && options.text) {
             const textOptions = options.text;
-            // 处理文本样式，应用默认样式
+            // 处理文本样式，应用默认样式，支持普通文本和公式元素
             const textStyles = textOptions.textStyles || [];
-            const processedTextStyles = textStyles.map((item: any) => ({
-              text: item.text,
-              style: BlockFactory.applyDefaultTextStyle(item.style)
-            }));
+            const processedTextStyles = textStyles.map((item: any) => {
+              if (item.equation !== undefined) {
+                return {
+                  equation: item.equation,
+                  style: BlockFactory.applyDefaultTextStyle(item.style)
+                };
+              } else {
+                return {
+                  text: item.text || '',
+                  style: BlockFactory.applyDefaultTextStyle(item.style)
+                };
+              }
+            });
             
             blockConfig.options = {
               textContents: processedTextStyles,
@@ -615,12 +644,21 @@ export class FeishuApiService extends BaseApiService {
             blockConfig.type = BlockType.TEXT;
             const textOptions = options.text;
             
-            // 处理文本样式，应用默认样式
+            // 处理文本样式，应用默认样式，支持普通文本和公式元素
             const textStyles = textOptions.textStyles || [];
-            const processedTextStyles = textStyles.map((item: any) => ({
-              text: item.text,
-              style: BlockFactory.applyDefaultTextStyle(item.style)
-            }));
+            const processedTextStyles = textStyles.map((item: any) => {
+              if (item.equation !== undefined) {
+                return {
+                  equation: item.equation,
+                  style: BlockFactory.applyDefaultTextStyle(item.style)
+                };
+              } else {
+                return {
+                  text: item.text || '',
+                  style: BlockFactory.applyDefaultTextStyle(item.style)
+                };
+              }
+            });
             
             blockConfig.options = {
               textContents: processedTextStyles,
