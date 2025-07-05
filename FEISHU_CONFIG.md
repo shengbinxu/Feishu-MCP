@@ -17,6 +17,7 @@
       "base:app:read",
       "bitable:app",
       "bitable:app:readonly",
+      "board:whiteboard:node:read",
       "contact:user.employee_id:readonly",
       "docs:document.content:read",
       "docx:document",
@@ -36,6 +37,7 @@
       "wiki:wiki:readonly"
     ],
     "user": [
+      "board:whiteboard:node:read",
       "docs:document.content:read",
       "docx:document",
       "docx:document:create",
