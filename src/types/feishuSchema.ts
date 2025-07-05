@@ -224,3 +224,10 @@ export const ImageWidthSchema = z.number().optional().describe(
 export const ImageHeightSchema = z.number().optional().describe(
   'Image height in pixels (optional). If not provided, the original image height will be used.'
 );
+
+// 画板ID参数定义
+export const WhiteboardIdSchema = z.string().describe(
+  'Whiteboard ID (required). This is the token value from the board.token field when getting document blocks.\n' +
+  'When you find a block with block_type: 43, the whiteboard ID is located in board.token field.\n' +
+  'Example: "EPJKwvY5ghe3pVbKj9RcT2msnBX"'
+);

@@ -7,6 +7,7 @@ import {
   DocumentIdSchema,
   BlockIdSchema,
   SearchKeySchema,
+  WhiteboardIdSchema,
 } from '../../types/feishuSchema.js';
 
 /**
@@ -128,8 +129,29 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
         const blocks = await feishuService.getDocumentBlocks(documentId);
         Logger.info(`飞书文档块获取成功，共 ${blocks.length} 个块`);
 
+        // 检查是否有 block_type 为 43 的块（画板块）
+        const whiteboardBlocks = blocks.filter((block: any) => block.block_type === 43);
+        const hasWhiteboardBlocks = whiteboardBlocks.length > 0;
+
+        let responseText = JSON.stringify(blocks, null, 2);
+        
+        if (hasWhiteboardBlocks) {
+          responseText += '\n\n⚠️ 检测到画板块 (block_type: 43)！\n';
+          responseText += `发现 ${whiteboardBlocks.length} 个画板块。画板块包含丰富的图形内容，如形状、文本、思维导图等。\n`;
+          responseText += '建议使用 get_feishu_whiteboard_content 工具来获取画板的具体内容和结构。\n';
+          responseText += '画板信息:\n';
+          whiteboardBlocks.forEach((block: any, index: number) => {
+            responseText += `  ${index + 1}. 块ID: ${block.block_id}`;
+            if (block.board && block.board.token) {
+              responseText += `, 画板ID: ${block.board.token}`;
+            }
+            responseText += '\n';
+          });
+          responseText += '请使用上述画板ID调用 get_feishu_whiteboard_content 工具。';
+        }
+
         return {
-          content: [{ type: 'text', text: JSON.stringify(blocks, null, 2) }],
+          content: [{ type: 'text', text: responseText }],
         };
       } catch (error) {
         Logger.error(`获取飞书文档块失败:`, error);
@@ -204,6 +226,38 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
           content: [
             { type: 'text', text: `搜索飞书文档失败: ${errorMessage}` },
           ],
+        };
+      }
+    },
+  );
+
+  // 添加获取画板内容工具
+  server.tool(
+    'get_feishu_whiteboard_content',
+    'Retrieves the content and structure of a Feishu whiteboard. This tool fetches all nodes (elements) from a whiteboard, including shapes, text, mind maps, and other graphical elements. Use this to analyze whiteboard content, extract information, or understand the structure of collaborative diagrams. The whiteboard ID can be obtained from the board.token field when getting document blocks with block_type: 43.',
+    {
+      whiteboardId: WhiteboardIdSchema,
+    },
+    async ({ whiteboardId }) => {
+      try {
+        if (!feishuService) {
+          return {
+            content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
+          };
+        }
+
+        Logger.info(`开始获取飞书画板内容，画板ID: ${whiteboardId}`);
+        const whiteboardContent = await feishuService.getWhiteboardContent(whiteboardId);
+        Logger.info(`飞书画板内容获取成功，节点数量: ${whiteboardContent.nodes?.length || 0}`);
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(whiteboardContent, null, 2) }],
+        };
+      } catch (error) {
+        Logger.error(`获取飞书画板内容失败:`, error);
+        const errorMessage = formatErrorMessage(error);
+        return {
+          content: [{ type: 'text', text: `获取飞书画板内容失败: ${errorMessage}` }],
         };
       }
     },

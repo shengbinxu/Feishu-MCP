@@ -1051,6 +1051,35 @@ export class FeishuApiService extends BaseApiService {
   }
 
   /**
+   * 获取画板内容
+   * @param whiteboardId 画板ID或URL
+   * @returns 画板节点数据
+   */
+  public async getWhiteboardContent(whiteboardId: string): Promise<any> {
+    try {
+      // 从URL中提取画板ID
+      let normalizedWhiteboardId = whiteboardId;
+      if (whiteboardId.includes('feishu.cn/board/')) {
+        // 从URL中提取画板ID
+        const matches = whiteboardId.match(/board\/([^\/\?]+)/);
+        if (matches) {
+          normalizedWhiteboardId = matches[1];
+        }
+      }
+
+      const endpoint = `/board/v1/whiteboards/${normalizedWhiteboardId}/nodes`;
+      
+      Logger.info(`开始获取画板内容，画板ID: ${normalizedWhiteboardId}`);
+      const response = await this.get(endpoint);
+      
+      Logger.info(`画板内容获取成功，节点数量: ${response.nodes?.length || 0}`);
+      return response;
+    } catch (error) {
+      this.handleApiError(error, '获取画板内容失败');
+    }
+  }
+
+  /**
    * 从路径或URL获取图片的Base64编码
    * @param imagePathOrUrl 图片路径或URL
    * @returns 图片的Base64编码和文件名

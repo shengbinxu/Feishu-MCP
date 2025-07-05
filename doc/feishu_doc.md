@@ -31,7 +31,7 @@ curl -i -X POST 'https://open.feishu.cn/open-apis/docx/v1/documents' \
 -H 'Content-Type: application/json' \
 -H 'Authorization: Bearer <access_token>' \
 -d '{
-    "folder_token": "<folder_token>",
+    "folder_token": "<folder_token>",****
     "title": "一篇新的文档"
 }'
 ```
@@ -783,5 +783,140 @@ url:https://open.feishu.cn/open-apis/suite/docs-api/search/object
         "total": 59
     },
     "msg": "success"
+}
+```
+### 19. 获取画板内容
+* 请求：
+  curl -i -X GET 'https://open.feishu.cn/open-apis/board/v1/whiteboards/PcdvwsVkEhylj7bQ74pcOFKXnHE/nodes' \
+  -H 'Authorization: Bearer u-fqvA2wpLlaWb0CRxO1Zc4j4gmhzM4kahMo00gkE02e7y'
+* 返回数据：
+```
+{
+  "code": 0,
+  "data": {
+    "nodes": [
+      {
+        "composite_shape": {
+          "type": "round_rect"
+        },
+        "height": 80,
+        "id": "o1:20",
+        "style": {
+          "border_opacity": 100,
+          "border_style": "solid",
+          "border_width": "narrow",
+          "fill_opacity": 100
+        },
+        "text": {
+          "font_size": 14,
+          "font_weight": "regular",
+          "horizontal_align": "center",
+          "text": "c",
+          "vertical_align": "mid"
+        },
+        "type": "composite_shape",
+        "width": 120,
+        "x": -132.9912109375,
+        "y": 728.19091796875
+      },
+      {
+        "composite_shape": {
+          "type": "round_rect"
+        },
+        "height": 80,
+        "id": "o1:19",
+        "style": {
+          "border_opacity": 100,
+          "border_style": "solid",
+          "border_width": "narrow",
+          "fill_opacity": 100
+        },
+        "text": {
+          "font_size": 14,
+          "font_weight": "regular",
+          "horizontal_align": "center",
+          "text": "b",
+          "vertical_align": "mid"
+        },
+        "type": "composite_shape",
+        "width": 120,
+        "x": -132.9912109375,
+        "y": 528.19091796875
+      },
+      {
+        "height": 28.27199935913086,
+        "id": "z2:10",
+        "mind_map": {
+          "parent_id": "z2:7"
+        },
+        "style": {
+          "border_opacity": 100,
+          "border_style": "solid",
+          "border_width": "narrow",
+          "fill_opacity": 100
+        },
+        "text": {
+          "font_size": 14,
+          "font_weight": "regular",
+          "horizontal_align": "left",
+          "text": "4",
+          "vertical_align": "mid"
+        },
+        "type": "mind_map",
+        "width": 23.770000457763672,
+        "x": 633.0499877929688,
+        "y": 629.5496215820312
+      },
+      {
+        "height": 48,
+        "id": "z2:7",
+        "mind_map": {
+          "parent_id": ""
+        },
+        "style": {
+          "border_opacity": 100,
+          "border_style": "solid",
+          "border_width": "narrow",
+          "fill_opacity": 100
+        },
+        "text": {
+          "font_size": 16,
+          "font_weight": "bold",
+          "horizontal_align": "center",
+          "text": "1",
+          "vertical_align": "mid"
+        },
+        "type": "mind_map",
+        "width": 49.42399978637695,
+        "x": 523.6259765625,
+        "y": 567.4136352539062
+      },
+      {
+        "height": 28.27199935913086,
+        "id": "z2:9",
+        "mind_map": {
+          "parent_id": "z2:7"
+        },
+        "style": {
+          "border_opacity": 100,
+          "border_style": "solid",
+          "border_width": "narrow",
+          "fill_opacity": 100
+        },
+        "text": {
+          "font_size": 14,
+          "font_weight": "regular",
+          "horizontal_align": "left",
+          "text": "3",
+          "vertical_align": "mid"
+        },
+        "type": "mind_map",
+        "width": 23.770000457763672,
+        "x": 633.0499877929688,
+        "y": 577.2776489257812
+      } 
+    ]
+  },
+  "msg": ""
 }
 ```

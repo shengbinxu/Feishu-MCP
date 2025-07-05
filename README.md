@@ -44,9 +44,10 @@
 | **搜索功能** | `search_feishu_documents`                                    | 搜索文档        | 查找特定内容        | ✅ 已完成 |
 | **工具功能** | `convert_feishu_wiki_to_document_id`                         | Wiki链接转换    | 将Wiki链接转为文档ID | ✅ 已完成 |
 | | `get_feishu_image_resource`                                  | 获取图片资源      | 下载文档中的图片      | ✅ 已完成 |
+| | `get_feishu_whiteboard_content`                              | 获取画板内容      | 获取画板中的图形元素和结构 | ✅ 已完成 |
 | **高级功能** | 表格操作                                                         | 创建和编辑表格     | 结构化数据展示       | 🚧 计划中 |
 | | 图表插入                                                         | 支持各类数据可视化图表 | 数据展示和分析       | 🚧 计划中 |
-| | 流程图                                                          | 支持流程图和思维导图  | 流程梳理和可视化      | 🚧 计划中 |
+| | 流程图插入                                                        | 支持流程图和思维导图  | 流程梳理和可视化      | 🚧 计划中 |
 | 图片插入  | `create_feishu_image_block`、`upload_and_bind_image_to_block` | 支持插入本地和远程图片 | 修改文档内容 | ✅ 已完成 |
 | | 公式支持                                                         | 支持数学公式和科学符号 | 学术和技术文档       | 🚧 计划中 |
 
