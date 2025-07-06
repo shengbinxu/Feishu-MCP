@@ -8,6 +8,8 @@ import {
   BlockIdSchema,
   SearchKeySchema,
   WhiteboardIdSchema,
+  DocumentTitleSchema,
+  FolderTokenSchema,
 } from '../../types/feishuSchema.js';
 
 /**
@@ -21,8 +23,8 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
     'create_feishu_document',
     'Creates a new Feishu document and returns its information. Use this tool when you need to create a document from scratch with a specific title and folder location.',
     {
-      title: z.string().describe('Document title (required). This will be displayed in the Feishu document list and document header.'),
-      folderToken: z.string().describe('Folder token (required). Specifies where to create the document. Format is an alphanumeric string like "doxcnOu1ZKYH4RtX1Y5XwL5WGRh".'),
+      title: DocumentTitleSchema,
+      folderToken: FolderTokenSchema,
     },
     async ({ title, folderToken }) => {
       try {

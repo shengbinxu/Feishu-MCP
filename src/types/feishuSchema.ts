@@ -27,6 +27,7 @@ export const IndexSchema = z.number().describe(
   '0 means to insert as the first content block after the title.\n' +
   'If children is empty or missing, use 0 to insert the first content block.\n' +
   'For nested blocks, index is relative to the parent block\'s children.\n' +
+  '**index must satisfy 0 ≤ index ≤ parentBlock.children.length, otherwise the API will return an error.**\n'+
   'Note: The title block itself is not part of the children array and cannot be operated on with index.' +
   'Specifies where the block should be inserted. Use 0 to insert at the beginning. ' +
   'Use get_feishu_document_blocks tool to understand document structure if unsure. ' +
@@ -233,3 +234,6 @@ export const WhiteboardIdSchema = z.string().describe(
   'When you find a block with block_type: 43, the whiteboard ID is located in board.token field.\n' +
   'Example: "EPJKwvY5ghe3pVbKj9RcT2msnBX"'
 );
+
+// 文档标题参数定义
+export const DocumentTitleSchema = z.string().describe('Document title (required). This will be displayed in the Feishu document list and document header.');
