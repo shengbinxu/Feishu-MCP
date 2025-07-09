@@ -19,8 +19,7 @@ import {
   BlockConfigSchema,
   MediaIdSchema,
   MediaExtraSchema,
-  ImagePathOrUrlSchema,
-  ImageFileNameSchema,
+  ImagesArraySchema,
   // ImageWidthSchema,
   // ImageHeightSchema
 } from '../../types/feishuSchema.js';
@@ -611,70 +610,64 @@ export function registerFeishuBlockTools(server: McpServer, feishuService: Feish
   // 添加图片上传绑定工具
   server.tool(
     'upload_and_bind_image_to_block',
-    'Uploads an image from a local path or URL and binds it to an existing empty image block. This tool is used after creating image blocks with batch_create_feishu_blocks tool. It handles uploading the image media and setting the image content to the specified block ID. Supports local file paths and HTTP/HTTPS URLs.',
+    'Uploads images from local paths or URLs and binds them to existing empty image blocks. This tool is used after creating image blocks with batch_create_feishu_blocks tool. It handles uploading the image media and setting the image content to the specified block IDs. Supports local file paths and HTTP/HTTPS URLs. Each image upload and binding is processed independently, and all results are returned in order.',
     {
       documentId: DocumentIdSchema,
-      blockId: BlockIdSchema,
-      imagePathOrUrl: ImagePathOrUrlSchema,
-      fileName: ImageFileNameSchema,
+      images:ImagesArraySchema,
     },
-    async ({ documentId, blockId, imagePathOrUrl, fileName }) => {
+    async ({ documentId, images }) => {
       try {
         if (!feishuService) {
           return {
             content: [{ type: 'text', text: 'Feishu service is not initialized. Please check the configuration' }],
           };
         }
-
-        Logger.info(`开始上传图片并绑定到块，文档ID: ${documentId}，块ID: ${blockId}，图片源: ${imagePathOrUrl}`);
-        
-        // 从路径或URL获取图片的Base64编码
-        const { base64: imageBase64, fileName: detectedFileName } = await (feishuService as any).getImageBase64FromPathOrUrl(imagePathOrUrl);
-        
-        // 使用提供的文件名或检测到的文件名
-        const finalFileName = fileName || detectedFileName;
-
-        // 第1步：上传图片素材
-        Logger.info('第1步：上传图片素材');
-        const uploadResult = await feishuService.uploadImageMedia(
-          imageBase64,
-          finalFileName,
-          blockId,
-        );
-
-        if (!uploadResult?.file_token) {
-          throw new Error('上传图片素材失败：无法获取file_token');
-        }
-
-        Logger.info(`图片素材上传成功，file_token: ${uploadResult.file_token}`);
-
-        // 第2步：设置图片块内容
-        Logger.info('第2步：设置图片块内容');
-        const setContentResult = await feishuService.setImageBlockContent(
-          documentId,
-          blockId,
-          uploadResult.file_token,
-        );
-
-        Logger.info('图片上传并绑定完成');
-
-        return {
-          content: [{ 
-            type: 'text', 
-            text: `图片上传并绑定成功！\n\n块ID: ${blockId}\n文件Token: ${uploadResult.file_token}\n文档修订ID: ${setContentResult.document_revision_id}\n\n完整结果:\n${JSON.stringify({
-              blockId: blockId,
+        const results = [];
+        for (const { blockId, imagePathOrUrl, fileName } of images) {
+          Logger.info(`开始上传图片并绑定到块，文档ID: ${documentId}，块ID: ${blockId}，图片源: ${imagePathOrUrl}`);
+          try {
+            const { base64: imageBase64, fileName: detectedFileName } = await (feishuService as any).getImageBase64FromPathOrUrl(imagePathOrUrl);
+            const finalFileName = fileName || detectedFileName;
+            Logger.info('第1步：上传图片素材');
+            const uploadResult = await feishuService.uploadImageMedia(
+              imageBase64,
+              finalFileName,
+              blockId,
+            );
+            if (!uploadResult?.file_token) {
+              throw new Error('上传图片素材失败：无法获取file_token');
+            }
+            Logger.info(`图片素材上传成功，file_token: ${uploadResult.file_token}`);
+            Logger.info('第2步：设置图片块内容');
+            const setContentResult = await feishuService.setImageBlockContent(
+              documentId,
+              blockId,
+              uploadResult.file_token,
+            );
+            Logger.info('图片上传并绑定完成');
+            results.push({
+              blockId,
               fileToken: uploadResult.file_token,
-              uploadResult: uploadResult,
-              setContentResult: setContentResult,
+              uploadResult,
+              setContentResult,
               documentRevisionId: setContentResult.document_revision_id
-            }, null, 2)}`
-          }],
+            });
+          } catch (err) {
+            Logger.error(`上传图片并绑定到块失败:`, err);
+            results.push({
+              blockId,
+              error: err instanceof Error ? err.message : String(err)
+            });
+          }
+        }
+        return {
+          content: [{ type: 'text', text: `批量图片上传绑定结果：\n${JSON.stringify(results, null, 2)}` }],
         };
       } catch (error) {
-        Logger.error(`上传图片并绑定到块失败:`, error);
+        Logger.error(`批量上传图片并绑定到块失败:`, error);
         const errorMessage = formatErrorMessage(error);
         return {
-          content: [{ type: 'text', text: `上传图片并绑定到块失败: ${errorMessage}` }],
+          content: [{ type: 'text', text: `批量上传图片并绑定到块失败: ${errorMessage}` }],
         };
       }
     },

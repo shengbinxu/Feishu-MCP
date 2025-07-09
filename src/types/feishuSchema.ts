@@ -156,10 +156,20 @@ export const BlockTypeEnum = z.string().describe(
   "For text blocks, you can include both regular text and equation elements in the same block."
 );
 
+// 图片宽度参数定义
+export const ImageWidthSchema = z.number().optional().describe(
+  'Image width in pixels (optional). If not provided, the original image width will be used.'
+);
+
+// 图片高度参数定义
+export const ImageHeightSchema = z.number().optional().describe(
+  'Image height in pixels (optional). If not provided, the original image height will be used.'
+);
+
 // 图片块内容定义 - 用于批量创建块工具
 export const ImageBlockSchema = z.object({
-  width: z.number().optional().describe('Image width in pixels (optional). If not provided, default width will be used.'),
-  height: z.number().optional().describe('Image height in pixels (optional). If not provided, default height will be used.'),
+  width: ImageWidthSchema,
+  height: ImageHeightSchema
 });
 
 // 块配置定义 - 用于批量创建块工具
@@ -218,14 +228,14 @@ export const ImageFileNameSchema = z.string().optional().describe(
   'Should include the file extension, e.g., "image.png" or "photo.jpg".'
 );
 
-// 图片宽度参数定义
-export const ImageWidthSchema = z.number().optional().describe(
-  'Image width in pixels (optional). If not provided, the original image width will be used.'
-);
 
-// 图片高度参数定义
-export const ImageHeightSchema = z.number().optional().describe(
-  'Image height in pixels (optional). If not provided, the original image height will be used.'
+// 批量图片上传绑定参数定义
+export const ImagesArraySchema = z.array(z.object({
+  blockId: BlockIdSchema,
+  imagePathOrUrl: ImagePathOrUrlSchema,
+  fileName: ImageFileNameSchema.optional(),
+})).describe(
+  'Array of image binding objects (required). Each object must include: blockId (target image block ID), imagePathOrUrl (local path or URL of the image), and optionally fileName (image file name, e.g., "image.png").'
 );
 
 // 画板ID参数定义
