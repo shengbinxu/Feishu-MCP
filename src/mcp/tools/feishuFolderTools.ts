@@ -14,34 +14,34 @@ import {
  */
 export function registerFeishuFolderTools(server: McpServer, feishuService: FeishuApiService | null): void {
   // 添加获取根文件夹信息工具
-  server.tool(
-    'get_feishu_root_folder_info',
-    'Retrieves basic information about the root folder in Feishu Drive. Returns the token, ID and user ID of the root folder, which can be used for subsequent folder operations.',
-    {},
-    async () => {
-      try {
-        if (!feishuService) {
-          return {
-            content: [{ type: 'text', text: '飞书服务未初始化，请检查配置' }],
-          };
-        }
-
-        Logger.info(`开始获取飞书根文件夹信息`);
-        const folderInfo = await feishuService.getRootFolderInfo();
-        Logger.info(`飞书根文件夹信息获取成功，token: ${folderInfo.token}`);
-
-        return {
-          content: [{ type: 'text', text: JSON.stringify(folderInfo, null, 2) }],
-        };
-      } catch (error) {
-        Logger.error(`获取飞书根文件夹信息失败:`, error);
-        const errorMessage = formatErrorMessage(error, '获取飞书根文件夹信息失败');
-        return {
-          content: [{ type: 'text', text: errorMessage }],
-        };
-      }
-    },
-  );
+  // server.tool(
+  //   'get_feishu_root_folder_info',
+  //   'Retrieves basic information about the root folder in Feishu Drive. Returns the token, ID and user ID of the root folder, which can be used for subsequent folder operations.',
+  //   {},
+  //   async () => {
+  //     try {
+  //       if (!feishuService) {
+  //         return {
+  //           content: [{ type: 'text', text: '飞书服务未初始化，请检查配置' }],
+  //         };
+  //       }
+  //
+  //       Logger.info(`开始获取飞书根文件夹信息`);
+  //       const folderInfo = await feishuService.getRootFolderInfo();
+  //       Logger.info(`飞书根文件夹信息获取成功，token: ${folderInfo.token}`);
+  //
+  //       return {
+  //         content: [{ type: 'text', text: JSON.stringify(folderInfo, null, 2) }],
+  //       };
+  //     } catch (error) {
+  //       Logger.error(`获取飞书根文件夹信息失败:`, error);
+  //       const errorMessage = formatErrorMessage(error, '获取飞书根文件夹信息失败');
+  //       return {
+  //         content: [{ type: 'text', text: errorMessage }],
+  //       };
+  //     }
+  //   },
+  // );
 
   // 添加获取文件夹中的文件清单工具
   server.tool(
