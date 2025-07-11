@@ -5,7 +5,7 @@
 [![smithery badge](https://smithery.ai/badge/@cso1z/feishu-mcp)](https://smithery.ai/server/@cso1z/feishu-mcp)
 [![MIT License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-为 [Cursor](https://cursor.sh/)、[Windsurf](https://codeium.com/windsurf)、[Cline](https://cline.bot/) 和其他 AI 驱动的编码工具提供访问飞书文档的能力，基于 [Model Context Protocol](https://modelcontextprotocol.io/introduction) 服务器实现。
+为 [Cursor](https://cursor.sh/)、[Windsurf](https://codeium.com/windsurf)、[Cline](https://cline.bot/) 和其他 AI 驱动的编码工具提供访问、编辑和结构化处理飞书文档的能力，基于 [Model Context Protocol](https://modelcontextprotocol.io/introduction) 服务器实现。
 
 本项目让 AI 编码工具能够直接获取和理解飞书文档的结构化内容，显著提升文档处理的智能化和效率。
 
@@ -16,6 +16,14 @@
 4. **高效检索与搜索**：内置关键字搜索，帮助你在大量文档中迅速找到目标信息。
 
 本项目让你在飞书文档的日常使用流程中实现智能获取、编辑和搜索，提升内容处理效率和体验。
+
+### 🎬 使用演示视频
+
+你可以通过以下视频了解 MCP 的实际使用效果和操作流程：
+
+<a href="https://www.bilibili.com/video/BV18z3gzdE1w/?spm_id_from=333.337.search-card.all.click&vd_source=94c14da5a71aeb01f665f159dd3d89c8">
+  <img src="image/demo.png" alt="飞书 MCP 使用演示" width="800"/>
+</a>
 
 > ⭐ **Star 本项目，第一时间获取最新功能和重要更新！** 关注项目可以让你不错过任何新特性、修复和优化，助你持续高效使用。你的支持也将帮助我们更好地完善和发展项目。⭐
 
@@ -58,11 +66,11 @@
 
 ## 📈 一周计划：提升工具效率
 
-- **精简工具集**：21个工具 → 13个工具，移除冗余，聚焦核心功能  ✅
-- **优化描述**：7000+ tokens → 5000- tokens，简化提示，节省请求token
-- **批量增强**：新增批量更新、批量图片上传，单次操作效率提升50% ✅
+- ~~**精简工具集**：21个工具 → 13个工具，移除冗余，聚焦核心功能~~ 0.0.15 ✅
+- ~~**优化描述**：7000+ tokens → 3000+ tokens，简化提示，节省请求token~~ 0.0.15 ✅
+- ~~**批量增强**：新增批量更新、批量图片上传，单次操作效率提升50%~~ 0.0.15 ✅
 - **流程优化**：减少多步调用，实现一键完成复杂任务
-
+- **支持多种凭证类型**：包括 tenant_access_token、app_access_token 和 user_access_token，满足不同场景下的认证需求。
 
 ---
 
@@ -115,7 +123,7 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
    pnpm install
    ```
 
-3. **配置环境变量**
+3. **配置环境变量(复制一份.env.example保存为.env文件)**
    
    **macOS/Linux:**
    ```bash
@@ -128,29 +136,7 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
    ```
 
 4. **编辑 .env 文件**
-   
-   你可以通过以下任一方式编辑 .env 文件：
-   
-   **方式一：使用文件管理器**
-   - 在项目文件夹中找到 `.env` 文件
-   - 双击打开（系统会自动选择文本编辑器）
-   - 或右键选择"打开方式" → 选择文本编辑器
-   
-   **方式二：使用 VS Code**
-   ```bash
-   code .env
-   ```
-   
-   **方式三：使用命令行编辑器**
-   ```bash
-   # macOS/Linux
-   nano .env
-   
-   # Windows
-   notepad .env
-   ```
-   
-   填入你的飞书应用凭证：
+  在项目根目录下找到并用任意文本编辑器打开 `.env` 文件，填写你的飞书应用凭证：
    ```env
    FEISHU_APP_ID=cli_xxxxx
    FEISHU_APP_SECRET=xxxxx
@@ -199,11 +185,11 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
         "FEISHU_APP_ID": "<你的飞书应用ID>",
         "FEISHU_APP_SECRET": "<你的飞书应用密钥>"
       }
-    }
-  },
-   "feishu_local": {
+    },
+    "feishu_local": {
       "url": "http://localhost:3333/sse"
-   }
+    }
+  }
 }
 ```
 ---
@@ -259,6 +245,7 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 
 你的支持是我们前进的动力！
 
-## 🤝 贡献
 
-欢迎提交 Issue 和 Pull Request！如果你在使用过程中遇到问题或有改进建议，也欢迎随时告诉我们。
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=cso1z/feishu-mcp&type=Timeline)](https://www.star-history.com/#cso1z/feishu-mcp&Timeline)
