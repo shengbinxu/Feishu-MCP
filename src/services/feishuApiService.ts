@@ -69,53 +69,25 @@ export class FeishuApiService extends BaseApiService {
       return cachedToken;
     }
 
-    try {
-      const requestData = {
-        app_id: this.config.feishu.appId,
-        app_secret: this.config.feishu.appSecret,
-      };
-
-      Logger.info('开始获取新的飞书访问令牌...');
-      Logger.debug('认证请求参数:', requestData);
-
-      // 不使用通用的request方法，因为这个请求不需要认证
-      // 为了确保正确处理响应，我们直接使用axios
-      const url = `${this.getBaseUrl()}${this.getAuthEndpoint()}`;
-      const headers = { 'Content-Type': 'application/json' };
-      
-      Logger.debug(`发送认证请求到: ${url}`);
-      const response = await axios.post(url, requestData, { headers });
-      
-      Logger.debug('认证响应:', response.data);
-      
-      if (!response.data || typeof response.data !== 'object') {
-        throw new Error('获取飞书访问令牌失败：响应格式无效');
-      }
-      
-      // 检查错误码
-      if (response.data.code !== 0) {
-        throw new Error(`获取飞书访问令牌失败：${response.data.msg || '未知错误'} (错误码: ${response.data.code})`);
-      }
-
-      if (!response.data.tenant_access_token) {
-        throw new Error('获取飞书访问令牌失败：响应中没有token');
-      }
-
-      this.accessToken = response.data.tenant_access_token;
-      this.tokenExpireTime = Date.now() + Math.min(
-        response.data.expire * 1000,
-        this.config.feishu.tokenLifetime
-      );
-
-      // 缓存令牌
-      this.cacheManager.cacheToken(this.accessToken, response.data.expire);
-
-      Logger.info(`成功获取新的飞书访问令牌，有效期: ${response.data.expire} 秒`);
-      return this.accessToken;
-    } catch (error) {
-      Logger.error('获取访问令牌失败:', error);
-      this.handleApiError(error, '获取飞书访问令牌失败');
+    // 通过HTTP请求调用配置的tokenEndpoint接口
+    const { appId, appSecret, authType, tokenEndpoint } = this.config.feishu;
+    const params = new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      token_type: authType
+    });
+    const url = `${tokenEndpoint}?${params.toString()}`;
+    const response = await axios.get(url);
+    const tokenResult = response.data?.data;
+    if (tokenResult && tokenResult.access_token) {
+      Logger.debug('使用Http的访问令牌');
+      CacheManager.getInstance().cacheToken(tokenResult.access_token,tokenResult.expires_in)
+      return tokenResult.access_token;
     }
+    if (tokenResult && tokenResult.needAuth && tokenResult.url) {
+      throw new Error(`请在浏览器打开以下链接进行授权：\n\n[点击授权](${tokenResult.url})`);
+    }
+    throw new Error('无法获取有效的access_token');
   }
 
   /**

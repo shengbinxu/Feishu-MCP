@@ -1,5 +1,7 @@
 import { Config } from './config.js';
 import { Logger } from './logger.js';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * 缓存项接口
@@ -19,6 +21,7 @@ export class CacheManager {
   private static instance: CacheManager;
   private cache: Map<string, CacheItem<any>>;
   private readonly config: Config;
+  private userTokenCacheFile = path.resolve(process.cwd(), 'user_token_cache.json');
 
   /**
    * 私有构造函数，用于单例模式
@@ -26,6 +29,7 @@ export class CacheManager {
   private constructor() {
     this.cache = new Map();
     this.config = Config.getInstance();
+    this.loadUserTokenCache();
 
     // 定期清理过期缓存
     setInterval(() => {
@@ -71,6 +75,9 @@ export class CacheManager {
     });
     
     Logger.debug(`缓存设置: ${key} (TTL: ${actualTtl}秒)`);
+    if (key.startsWith('user_access_token:')) {
+      this.saveUserTokenCache();
+    }
     return true;
   }
   
@@ -114,6 +121,9 @@ export class CacheManager {
     const result = this.cache.delete(key);
     if (result) {
       Logger.debug(`缓存删除: ${key}`);
+      if (key.startsWith('user_access_token:')) {
+        this.saveUserTokenCache();
+      }
     }
     return result;
   }
@@ -215,23 +225,6 @@ export class CacheManager {
     };
   }
 
-  /**
-   * 缓存访问令牌
-   * @param token 访问令牌
-   * @param expiresInSeconds 过期时间（秒）
-   * @returns 是否成功设置缓存
-   */
-  public cacheToken(token: string, expiresInSeconds: number): boolean {
-    return this.set('access_token', token, expiresInSeconds);
-  }
-
-  /**
-   * 获取缓存的访问令牌
-   * @returns 访问令牌，如果未找到或已过期则返回null
-   */
-  public getToken(): string | null {
-    return this.get<string>('access_token');
-  }
 
   /**
    * 缓存Wiki到文档ID的转换结果
@@ -251,4 +244,96 @@ export class CacheManager {
   public getWikiToDocId(wikiToken: string): string | null {
     return this.get<string>(`wiki:${wikiToken}`);
   }
+
+
+  /**
+   * 缓存tenant访问令牌
+   * @param token 访问令牌
+   * @param expiresInSeconds 过期时间（秒）
+   * @param key 缓存键，默认为'access_token'
+   * @returns 是否成功设置缓存
+   */
+  public cacheTenantToken(key: string , token: any, expiresInSeconds: number): boolean {
+    return this.set(`tenant_access_token:${key}`, token, expiresInSeconds);
+  }
+
+  /**
+   * 获取tenant缓存的访问令牌
+   * @param key 缓存键，默认为'access_token'
+   * @returns 访问令牌，如果未找到或已过期则返回null
+   */
+  public getTenantToken(key: string): string | null {
+    return this.get(`tenant_access_token:${key}`);
+  }
+
+
+  public cacheUserToken(key: string, tokenObj: any, expiresIn: number): boolean {
+    return this.set(`user_access_token:${key}`, tokenObj, expiresIn);
+  }
+
+  public getUserToken(key: string): any {
+    return this.get<any>(`user_access_token:${key}`);
+  }
+
+  /**
+   * 缓存访问令牌
+   * @param token 访问令牌
+   * @param expiresInSeconds 过期时间（秒）
+   * @returns 是否成功设置缓存
+   */
+  public cacheToken( token: string, expiresInSeconds: number): boolean {
+    return this.set(`access_token`, token, expiresInSeconds);
+  }
+
+  /**
+   * 获取缓存的访问令牌
+   * @returns 访问令牌，如果未找到或已过期则返回null
+   */
+  public getToken(): string | null {
+    return this.get(`access_token`);
+  }
+
+  /**
+   * 生成client_id+client_secret签名
+   * @param client_id
+   * @param client_secret
+   * @returns 唯一key
+   */
+  public static async getClientKey(client_id: string, client_secret: string): Promise<string> {
+    const crypto = await import('crypto');
+    return crypto.createHash('sha256').update(client_id + ':' + client_secret).digest('hex');
+  }
+
+  private loadUserTokenCache() {
+    if (fs.existsSync(this.userTokenCacheFile)) {
+      try {
+        const raw = fs.readFileSync(this.userTokenCacheFile, 'utf-8');
+        const obj = JSON.parse(raw);
+        for (const k in obj) {
+          if (k.startsWith('user_access_token:')) {
+            this.cache.set(k, obj[k]);
+          }
+        }
+        Logger.info(`已加载本地 user_token_cache.json，共${Object.keys(obj).length}条`);
+      } catch (e) {
+        Logger.warn('加载 user_token_cache.json 失败', e);
+      }
+    }
+  }
+
+  private saveUserTokenCache() {
+    const obj: Record<string, any> = {};
+    for (const [k, v] of this.cache.entries()) {
+      if (k.startsWith('user_access_token:')) {
+        obj[k] = v;
+      }
+    }
+    try {
+      fs.writeFileSync(this.userTokenCacheFile, JSON.stringify(obj, null, 2), 'utf-8');
+      Logger.debug('user_token_cache.json 已写入');
+    } catch (e) {
+      Logger.warn('写入 user_token_cache.json 失败', e);
+    }
+  }
+
 } 

@@ -4,6 +4,7 @@ import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { Logger } from './utils/logger.js';
 import { SSEConnectionManager } from './manager/sseConnectionManager.js';
 import { FeishuMcp } from './mcp/feishuMcp.js';
+import { callback, getTokenByParams } from './services/callbackService.js';
 
 export class FeishuMcpServer {
   private connectionManager: SSEConnectionManager;
@@ -67,6 +68,26 @@ export class FeishuMcpServer {
         return;
       }
       await transport.handlePostMessage(req, res);
+    });
+
+    app.get('/callback', callback);
+
+    app.get('/getToken', async (req: Request, res: Response) => {
+      const { client_id, client_secret, token_type } = req.query;
+      if (!client_id || !client_secret) {
+        res.status(400).json({ code: 400, msg: '缺少 client_id 或 client_secret' });
+        return;
+      }
+      try {
+        const tokenResult = await getTokenByParams({
+          client_id: client_id as string,
+          client_secret: client_secret as string,
+          token_type: token_type as string
+        });
+        res.json({ code: 0, msg: 'success', data: tokenResult });
+      } catch (e: any) {
+        res.status(500).json({ code: 500, msg: e.message || '获取token失败' });
+      }
     });
 
     app.listen(port, () => {

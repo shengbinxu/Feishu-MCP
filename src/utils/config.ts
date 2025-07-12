@@ -27,7 +27,8 @@ export interface FeishuConfig {
   appId: string;
   appSecret: string;
   baseUrl: string;
-  tokenLifetime: number;
+  authType: 'tenant' | 'user';
+  tokenEndpoint: string;
 }
 
 /**
@@ -136,6 +137,14 @@ export class Config {
         'cache-ttl': {
           type: 'number',
           description: '缓存生存时间（秒）'
+        },
+        'feishu-auth-type': {
+          type: 'string',
+          description: '飞书认证类型 (tenant 或 user)'
+        },
+        'feishu-token-endpoint': {
+          type: 'string',
+          description: '获取token的接口地址，默认 http://localhost:3333/getToken'
         }
       })
       .help()
@@ -171,11 +180,14 @@ export class Config {
    * @returns 飞书配置
    */
   private initFeishuConfig(argv: any): FeishuConfig {
+    // 先初始化serverConfig以获取端口
+    const serverConfig = this.server || this.initServerConfig(argv);
     const feishuConfig: FeishuConfig = {
       appId: '',
       appSecret: '',
       baseUrl: 'https://open.feishu.cn/open-apis',
-      tokenLifetime: 7200000 // 2小时，单位：毫秒
+      authType: 'tenant', // 默认
+      tokenEndpoint: `http://127.0.0.1:${serverConfig.port}/getToken`, // 默认动态端口
     };
     
     // 处理App ID
@@ -206,13 +218,27 @@ export class Config {
     } else {
       this.configSources['feishu.baseUrl'] = ConfigSource.DEFAULT;
     }
-    
-    // 处理token生命周期
-    if (process.env.FEISHU_TOKEN_LIFETIME) {
-      feishuConfig.tokenLifetime = parseInt(process.env.FEISHU_TOKEN_LIFETIME, 10) * 1000;
-      this.configSources['feishu.tokenLifetime'] = ConfigSource.ENV;
+
+    // 处理authType
+    if (argv['feishu-auth-type']) {
+      feishuConfig.authType = argv['feishu-auth-type'] === 'user' ? 'user' : 'tenant';
+      this.configSources['feishu.authType'] = ConfigSource.CLI;
+    } else if (process.env.FEISHU_AUTH_TYPE) {
+      feishuConfig.authType = process.env.FEISHU_AUTH_TYPE === 'user' ? 'user' : 'tenant';
+      this.configSources['feishu.authType'] = ConfigSource.ENV;
     } else {
-      this.configSources['feishu.tokenLifetime'] = ConfigSource.DEFAULT;
+      this.configSources['feishu.authType'] = ConfigSource.DEFAULT;
+    }
+    
+    // 处理tokenEndpoint
+    if (argv['feishu-token-endpoint']) {
+      feishuConfig.tokenEndpoint = argv['feishu-token-endpoint'];
+      this.configSources['feishu.tokenEndpoint'] = ConfigSource.CLI;
+    } else if (process.env.FEISHU_TOKEN_ENDPOINT) {
+      feishuConfig.tokenEndpoint = process.env.FEISHU_TOKEN_ENDPOINT;
+      this.configSources['feishu.tokenEndpoint'] = ConfigSource.ENV;
+    } else {
+      this.configSources['feishu.tokenEndpoint'] = ConfigSource.DEFAULT;
     }
     
     return feishuConfig;
@@ -351,7 +377,8 @@ export class Config {
       Logger.info(`- App Secret: ${this.maskApiKey(this.feishu.appSecret)} (来源: ${this.configSources['feishu.appSecret']})`);
     }
     Logger.info(`- API URL: ${this.feishu.baseUrl} (来源: ${this.configSources['feishu.baseUrl']})`);
-    Logger.info(`- Token生命周期: ${this.feishu.tokenLifetime / 1000}秒 (来源: ${this.configSources['feishu.tokenLifetime']})`);
+    Logger.info(`- 认证类型: ${this.feishu.authType} (来源: ${this.configSources['feishu.authType']})`);
+    Logger.info(`- Token获取地址: ${this.feishu.tokenEndpoint} (来源: ${this.configSources['feishu.tokenEndpoint']})`);
     
     Logger.info('日志配置:');
     Logger.info(`- 日志级别: ${LogLevel[this.log.level]} (来源: ${this.configSources['log.level']})`);
@@ -393,6 +420,11 @@ export class Config {
     
     if (!this.feishu.appSecret) {
       Logger.error('缺少飞书应用Secret，请通过环境变量FEISHU_APP_SECRET或命令行参数--feishu-app-secret提供');
+      return false;
+    }
+
+    if (!this.feishu.tokenEndpoint) {
+      Logger.error('缺少飞书Token获取地址，请通过环境变量FEISHU_TOKEN_ENDPOINT或命令行参数--feishu-token-endpoint提供');
       return false;
     }
     

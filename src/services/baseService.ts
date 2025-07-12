@@ -38,22 +38,6 @@ export abstract class BaseApiService {
   protected abstract getBaseUrl(): string;
   
   /**
-   * 获取API认证端点
-   * @returns 认证端点URL
-   */
-  protected abstract getAuthEndpoint(): string;
-  
-  /**
-   * 检查访问令牌是否过期
-   * @returns 是否过期
-   */
-  protected isTokenExpired(): boolean {
-    if (!this.accessToken || !this.tokenExpireTime) return true;
-    // 预留5分钟的缓冲时间
-    return Date.now() >= (this.tokenExpireTime - 5 * 60 * 1000);
-  }
-  
-  /**
    * 获取访问令牌
    * @returns 访问令牌
    */

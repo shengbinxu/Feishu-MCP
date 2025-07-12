@@ -2,6 +2,7 @@
 ## 详细步骤
 ### 一、注册飞书应用
 * url:https://open.feishu.cn/app?lang=zh-CN
+
   ![注册飞书应用](image/register_application.png)
 ### 二、为应用添加权限
 创建飞书应用完成后，我们需要为该应用添加飞书文档相关的权限，让应用拥有访问创建文档相关的能力
@@ -14,6 +15,7 @@
 {
   "scopes": {
     "tenant": [
+      "docx:document.block:convert",
       "base:app:read",
       "bitable:app",
       "bitable:app:readonly",
@@ -37,22 +39,34 @@
       "wiki:wiki:readonly"
     ],
     "user": [
+      "docx:document.block:convert",
+      "base:app:read",
+      "bitable:app",
+      "bitable:app:readonly",
       "board:whiteboard:node:read",
+      "contact:user.employee_id:readonly",
       "docs:document.content:read",
       "docx:document",
       "docx:document:create",
       "docx:document:readonly",
       "drive:drive",
+      "drive:drive:readonly",
+      "drive:file",
       "drive:file:upload",
       "sheets:spreadsheet",
+      "sheets:spreadsheet:readonly",
+      "space:document:retrieve",
+      "space:folder:create",
+      "wiki:space:read",
       "wiki:space:retrieve",
       "wiki:wiki",
-      "wiki:wiki:readonly"
+      "wiki:wiki:readonly",
+      "offline_access"
     ]
   }
 }
 ```
-#### 3. 发布审批应用
+#### 3. 发布审批应用（注：**可用范围选择全部**）
 ![发布审批应用](image/release.png)
 #### 4. 等待管理员审批通过
 ![发布审批应用完成](image/complete_permissions.png)
@@ -88,12 +102,11 @@
 
 ![赋予编辑权限](image/add_edit_permission.png)
 
-### 四、查看应用app Id与app Secret 
+### 四、添加redirect_uri回调地址:http://localhost:3333/callback (3333为mcp server默认端口)
+![安全设置](image/redirect_uri.png)
+
+### 五、查看应用app Id与app Secret 
 ![应用详情](image/appid.png)
-
-
-### 五、使用[smithery平台](https://smithery.ai/server/@cso1z/feishu-mcp)快捷接入
-
 
 ### 六、注
 1. 具体可参见[官方云文档常见问题](https://open.feishu.cn/document/server-docs/docs/faq)

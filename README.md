@@ -21,7 +21,7 @@
 
 你可以通过以下视频了解 MCP 的实际使用效果和操作流程：
 
-<a href="https://www.bilibili.com/video/BV18z3gzdE1w/?spm_id_from=333.337.search-card.all.click&vd_source=94c14da5a71aeb01f665f159dd3d89c8">
+<a href="https://www.bilibili.com/video/BV1z7MdzoEfu/?vd_source=94c14da5a71aeb01f665f159dd3d89c8">
   <img src="image/demo.png" alt="飞书 MCP 使用演示" width="800"/>
 </a>
 
@@ -70,7 +70,7 @@
 - ~~**优化描述**：7000+ tokens → 3000+ tokens，简化提示，节省请求token~~ 0.0.15 ✅
 - ~~**批量增强**：新增批量更新、批量图片上传，单次操作效率提升50%~~ 0.0.15 ✅
 - **流程优化**：减少多步调用，实现一键完成复杂任务
-- **支持多种凭证类型**：包括 tenant_access_token、app_access_token 和 user_access_token，满足不同场景下的认证需求。
+- ~~**支持多种凭证类型**：包括 tenant_access_token和 user_access_token，满足不同场景下的认证需求~~  (飞书应用配置发生变更) 0.0.16 ✅。
 
 ---
 
@@ -152,11 +152,17 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 
 ### 环境变量配置
 
-| 变量名 | 必需 | 描述 | 默认值 |
-|--------|------|------|-------|
-| `FEISHU_APP_ID` | ✅ | 飞书应用 ID | - |
-| `FEISHU_APP_SECRET` | ✅ | 飞书应用密钥 | - |
-| `PORT` | ❌ | 服务器端口 | `3333` |
+| 变量名 | 必需 | 描述                                            | 默认值 |
+|--------|------|-----------------------------------------------|-------|
+| `FEISHU_APP_ID` | ✅ | 飞书应用 ID                                       | - |
+| `FEISHU_APP_SECRET` | ✅ | 飞书应用密钥                                        | - |
+| `PORT` | ❌ | 服务器端口                                         | `3333` |
+| `FEISHU_AUTH_TYPE` | ❌ | 认证凭证类型，建议本地运行时使用 `user`（用户级，需OAuth授权），云端/生产环境使用 `tenant`（应用级，默认） | `tenant` |
+| `FEISHU_TOKEN_ENDPOINT` | ❌ | 获取 token 的接口地址，仅当自定义 token 管理时需要              | `http://localhost:3333/getToken` |
+
+> **注意：**
+> - 只有本地运行服务时支持 `user` 凭证，否则需配置 `FEISHU_TOKEN_ENDPOINT`，自行实现 token 获取与管理（可参考 `callbackService`、`feishuAuthService`）。
+> - `FEISHU_TOKEN_ENDPOINT` 接口参数：`client_id`, `client_secret`, `token_type`（可选，tenant/user）；返回参数：`access_token`, `needAuth`, `url`（需授权时）, `expires_in`（单位:s）。
 
 ### 命令行参数
 
