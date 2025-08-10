@@ -103,6 +103,7 @@ export abstract class BaseApiService {
     additionalHeaders?: Record<string, string>,
     responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream'
   ): Promise<T> {
+    console.log('request:', endpoint, method, data, needsAuth, additionalHeaders, responseType);
     try {
       // 构建请求URL
       const url = `${this.getBaseUrl()}${endpoint}`;
@@ -122,6 +123,7 @@ export abstract class BaseApiService {
       
       // 添加认证令牌
       if (needsAuth) {
+        // 如果改为多 user token，需要修改这里
         const accessToken = await this.getAccessToken();
         headers['Authorization'] = `Bearer ${accessToken}`;
       }
