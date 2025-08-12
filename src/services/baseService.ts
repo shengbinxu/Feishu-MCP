@@ -93,6 +93,7 @@ export abstract class BaseApiService {
    * @param needsAuth 是否需要认证
    * @param additionalHeaders 附加请求头
    * @param responseType 响应类型
+   * @param userAccessToken 用户访问令牌（如果提供，将使用用户令牌而非应用令牌）
    * @returns 响应数据
    */
   protected async request<T = any>(
@@ -101,7 +102,8 @@ export abstract class BaseApiService {
     data?: any, 
     needsAuth: boolean = true,
     additionalHeaders?: Record<string, string>,
-    responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream'
+    responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream',
+    userAccessToken?: string
   ): Promise<T> {
     try {
       // 构建请求URL
@@ -122,7 +124,16 @@ export abstract class BaseApiService {
       
       // 添加认证令牌
       if (needsAuth) {
-        const accessToken = await this.getAccessToken();
+        let accessToken: string;
+        if (userAccessToken) {
+          // 使用用户访问令牌
+          accessToken = userAccessToken;
+          Logger.debug('使用用户访问令牌进行API调用');
+        } else {
+          // 使用应用访问令牌
+          accessToken = await this.getAccessToken();
+          Logger.debug('使用应用访问令牌进行API调用');
+        }
         headers['Authorization'] = `Bearer ${accessToken}`;
       }
       
@@ -205,10 +216,11 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param params 请求参数
    * @param needsAuth 是否需要认证
+   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async get<T = any>(endpoint: string, params?: any, needsAuth: boolean = true): Promise<T> {
-    return this.request<T>(endpoint, 'GET', params, needsAuth);
+  protected async get<T = any>(endpoint: string, params?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
+    return this.request<T>(endpoint, 'GET', params, needsAuth, undefined, 'json', userAccessToken);
   }
   
   /**
@@ -216,10 +228,11 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param data 请求数据
    * @param needsAuth 是否需要认证
+   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async post<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
-    return this.request<T>(endpoint, 'POST', data, needsAuth);
+  protected async post<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
+    return this.request<T>(endpoint, 'POST', data, needsAuth, undefined, 'json', userAccessToken);
   }
   
   /**
@@ -227,10 +240,11 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param data 请求数据
    * @param needsAuth 是否需要认证
+   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async put<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
-    return this.request<T>(endpoint, 'PUT', data, needsAuth);
+  protected async put<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
+    return this.request<T>(endpoint, 'PUT', data, needsAuth, undefined, 'json', userAccessToken);
   }
   
   /**
@@ -238,10 +252,11 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param data 请求数据
    * @param needsAuth 是否需要认证
+   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async patch<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
-    return this.request<T>(endpoint, 'PATCH', data, needsAuth);
+  protected async patch<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
+    return this.request<T>(endpoint, 'PATCH', data, needsAuth, undefined, 'json', userAccessToken);
   }
   
   /**

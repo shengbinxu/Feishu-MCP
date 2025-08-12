@@ -12,13 +12,15 @@ import { Config } from '../../utils/config';
  * 注册飞书文件夹相关的MCP工具
  * @param server MCP服务器实例
  * @param feishuService 飞书API服务实例
+ * @param userAccessToken 用户访问令牌（可选）
+ * @param userInfo 用户信息（可选）
  */
-export function registerFeishuFolderTools(server: McpServer, feishuService: FeishuApiService | null): void {
+export function registerFeishuFolderTools(server: McpServer, feishuService: FeishuApiService | null, userAccessToken?: string, userInfo?: any): void {
 
   const config = Config.getInstance();
 
-  // 添加获取根文件夹信息工具
-  if (config.feishu.authType === 'user') {
+  // 添加获取根文件夹信息工具 - 如果有用户令牌则注册
+  if (userAccessToken || config.feishu.authType === 'user') {
     server.tool(
       'get_feishu_root_folder_info',
       'Retrieves basic information about the root folder in Feishu Drive. Returns the token, ID and user ID of the root folder, which can be used for subsequent folder operations.',
@@ -31,8 +33,8 @@ export function registerFeishuFolderTools(server: McpServer, feishuService: Feis
             };
           }
 
-          Logger.info(`开始获取飞书根文件夹信息`);
-          const folderInfo = await feishuService.getRootFolderInfo();
+          Logger.info(`开始获取飞书根文件夹信息 (用户: ${userInfo?.name || '未知'})`);
+          const folderInfo = await feishuService.getRootFolderInfo(userAccessToken);
           Logger.info(`飞书根文件夹信息获取成功，token: ${folderInfo.token}`);
 
           return {

@@ -94,9 +94,10 @@ export class FeishuApiService extends BaseApiService {
    * 创建飞书文档
    * @param title 文档标题
    * @param folderToken 文件夹Token
+   * @param userKey 用户标识（可选）
    * @returns 创建的文档信息
    */
-  public async createDocument(title: string, folderToken: string): Promise<any> {
+  public async createDocument(title: string, folderToken: string, userKey?: string): Promise<any> {
     try {
       const endpoint = '/docx/v1/documents';
 
@@ -105,7 +106,7 @@ export class FeishuApiService extends BaseApiService {
         folder_token: folderToken
       };
 
-      const response = await this.post(endpoint, payload);
+      const response = await this.post(endpoint, payload, true, userKey);
       return response;
     } catch (error) {
       this.handleApiError(error, '创建飞书文档失败');
@@ -115,13 +116,14 @@ export class FeishuApiService extends BaseApiService {
   /**
    * 获取文档信息
    * @param documentId 文档ID或URL
+   * @param userKey 用户标识（可选）
    * @returns 文档信息
    */
-  public async getDocumentInfo(documentId: string): Promise<any> {
+  public async getDocumentInfo(documentId: string, userKey?: string): Promise<any> {
     try {
       const normalizedDocId = ParamUtils.processDocumentId(documentId);
       const endpoint = `/docx/v1/documents/${normalizedDocId}`;
-      const response = await this.get(endpoint);
+      const response = await this.get(endpoint, undefined, true, userKey);
       return response;
     } catch (error) {
       this.handleApiError(error, '获取文档信息失败');
@@ -132,14 +134,15 @@ export class FeishuApiService extends BaseApiService {
    * 获取文档内容
    * @param documentId 文档ID或URL
    * @param lang 语言代码，0为中文，1为英文
+   * @param userKey 用户标识（可选）
    * @returns 文档内容
    */
-  public async getDocumentContent(documentId: string, lang: number = 0): Promise<string> {
+  public async getDocumentContent(documentId: string, lang: number = 0, userKey?: string): Promise<string> {
     try {
       const normalizedDocId = ParamUtils.processDocumentId(documentId);
       const endpoint = `/docx/v1/documents/${normalizedDocId}/raw_content`;
       const params = { lang };
-      const response = await this.get(endpoint, params);
+      const response = await this.get(endpoint, params, true, userKey);
       return response.content;
     } catch (error) {
       this.handleApiError(error, '获取文档内容失败');
@@ -150,9 +153,10 @@ export class FeishuApiService extends BaseApiService {
    * 获取文档块结构
    * @param documentId 文档ID或URL
    * @param pageSize 每页块数量
+   * @param userKey 用户标识（可选）
    * @returns 文档块数组
    */
-  public async getDocumentBlocks(documentId: string, pageSize: number = 500): Promise<any[]> {
+  public async getDocumentBlocks(documentId: string, pageSize: number = 500, userKey?: string): Promise<any[]> {
     try {
       const normalizedDocId = ParamUtils.processDocumentId(documentId);
       const endpoint = `/docx/v1/documents/${normalizedDocId}/blocks`;
@@ -169,7 +173,7 @@ export class FeishuApiService extends BaseApiService {
           params.page_token = pageToken;
         }
 
-        const response = await this.get(endpoint, params);
+        const response = await this.get(endpoint, params, true, userKey);
         const blocks = response.items || [];
 
         allBlocks = [...allBlocks, ...blocks];
@@ -186,9 +190,10 @@ export class FeishuApiService extends BaseApiService {
    * 获取块内容
    * @param documentId 文档ID或URL
    * @param blockId 块ID
+   * @param userKey 用户标识（可选）
    * @returns 块内容
    */
-  public async getBlockContent(documentId: string, blockId: string): Promise<any> {
+  public async getBlockContent(documentId: string, blockId: string, userKey?: string): Promise<any> {
     try {
       const normalizedDocId = ParamUtils.processDocumentId(documentId);
       const safeBlockId = ParamUtils.processBlockId(blockId);
@@ -196,7 +201,7 @@ export class FeishuApiService extends BaseApiService {
       const endpoint = `/docx/v1/documents/${normalizedDocId}/blocks/${safeBlockId}`;
       const params = { document_revision_id: -1 };
       
-      const response = await this.get(endpoint, params);
+      const response = await this.get(endpoint, params, true, userKey);
 
       return response;
     } catch (error) {
@@ -721,12 +726,13 @@ export class FeishuApiService extends BaseApiService {
   /**
    * 获取飞书根文件夹信息
    * 获取用户的根文件夹的元数据信息，包括token、id和用户id
+   * @param userKey 用户标识（可选）
    * @returns 根文件夹信息
    */
-  public async getRootFolderInfo(): Promise<any> {
+  public async getRootFolderInfo(userKey?: string): Promise<any> {
     try {
       const endpoint = '/drive/explorer/v2/root_folder/meta';
-      const response = await this.get(endpoint);
+      const response = await this.get(endpoint, undefined, true, userKey);
       Logger.debug('获取根文件夹信息成功:', response);
       return response;
     } catch (error) {
@@ -739,12 +745,14 @@ export class FeishuApiService extends BaseApiService {
    * @param folderToken 文件夹Token
    * @param orderBy 排序方式，默认按修改时间排序
    * @param direction 排序方向，默认降序
+   * @param userKey 用户标识（可选）
    * @returns 文件清单信息
    */
   public async getFolderFileList(
     folderToken: string, 
     orderBy: string = 'EditedTime', 
-    direction: string = 'DESC'
+    direction: string = 'DESC',
+    userKey?: string
   ): Promise<any> {
     try {
       const endpoint = '/drive/v1/files';
@@ -754,7 +762,7 @@ export class FeishuApiService extends BaseApiService {
         direction: direction
       };
       
-      const response = await this.get(endpoint, params);
+      const response = await this.get(endpoint, params, true, userKey);
       Logger.debug(`获取文件夹(${folderToken})中的文件清单成功，文件数量: ${response.files?.length || 0}`);
       return response;
     } catch (error) {
@@ -788,9 +796,10 @@ export class FeishuApiService extends BaseApiService {
    * 搜索飞书文档
    * @param searchKey 搜索关键字
    * @param count 每页数量，默认50
+   * @param userKey 用户标识（可选）
    * @returns 搜索结果，包含所有页的数据
    */
-  public async searchDocuments(searchKey: string, count: number = 50): Promise<any> {
+  public async searchDocuments(searchKey: string, count: number = 50, userKey?: string): Promise<any> {
     try {
       Logger.info(`开始搜索文档，关键字: ${searchKey}`);
 
@@ -809,7 +818,7 @@ export class FeishuApiService extends BaseApiService {
         };
 
         Logger.debug(`请求搜索，offset: ${offset}, count: ${count}`);
-        const response = await this.post(endpoint, payload);
+        const response = await this.post(endpoint, payload, true, userKey);
         
         Logger.debug('搜索响应:', JSON.stringify(response, null, 2));
 
