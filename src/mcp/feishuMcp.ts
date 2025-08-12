@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { FeishuApiService } from '../services/feishuApiService.js';
 import { Logger } from '../utils/logger.js';
+import { Config } from '../utils/config.js';
 import { registerFeishuTools } from './tools/feishuTools.js';
 import { registerFeishuBlockTools } from './tools/feishuBlockTools.js';
 import { registerFeishuFolderTools } from './tools/feishuFolderTools.js';
@@ -54,7 +55,6 @@ export class FeishuMcp extends McpServer {
   private initFeishuService(): void {
     try {
       // 先检查配置是否完整
-      const { Config } = require('../utils/config.js');
       const config = Config.getInstance();
       
       Logger.info(`检查飞书配置 - App ID: ${config.feishu.appId ? '已配置' : '未配置'}, App Secret: ${config.feishu.appSecret ? '已配置' : '未配置'}`);
