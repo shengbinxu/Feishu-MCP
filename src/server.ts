@@ -137,7 +137,7 @@ export class FeishuMcpServer {
         response_type = 'code',
         client_id, 
         redirect_uri, 
-        scope = 'docs:document.content:read', 
+        scope = 'docs:document.content:read docx:document docx:document.block:convert docx:document:create docx:document:readonly drive:drive drive:file:upload wiki:space:read wiki:space:retrieve wiki:wiki wiki:wiki:readonly offline_access drive:drive drive:drive.metadata:readonly', 
         state 
       } = req.query;
       
