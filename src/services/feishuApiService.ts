@@ -668,7 +668,7 @@ export class FeishuApiService extends BaseApiService {
         direction: direction
       };
       
-      const response = await this.get(endpoint, params, true);
+      const response = await this.get(endpoint, params);
       Logger.debug(`获取文件夹(${folderToken})中的文件清单成功，文件数量: ${response.files?.length || 0}`);
       return response;
     } catch (error) {
