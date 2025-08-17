@@ -20,14 +20,12 @@ const serverOptions = {
  */
 export class FeishuMcp extends McpServer {
   private feishuService: FeishuApiService | null = null;
-  private userAccessToken?: string;
 
   /**
    * 构造函数
    */
-  constructor(userAccessToken?: string) {
+  constructor() {
     super(serverInfo,serverOptions);
-    this.userAccessToken = userAccessToken;
 
     // 初始化飞书服务
     this.initFeishuService();
@@ -64,8 +62,8 @@ export class FeishuMcp extends McpServer {
     }
 
     // 注册所有工具
-    registerFeishuTools(this, this.feishuService, this.userAccessToken);
-    registerFeishuBlockTools(this, this.feishuService, this.userAccessToken);
-    registerFeishuFolderTools(this, this.feishuService, this.userAccessToken);
+    registerFeishuTools(this, this.feishuService);
+    registerFeishuBlockTools(this, this.feishuService);
+    registerFeishuFolderTools(this, this.feishuService);
   }
 }

@@ -6,6 +6,7 @@ import { FeishuMcp } from './mcp/feishuMcp.js';
 import { callback, getTokenByParams } from './services/callbackService.js';
 import { Config } from './utils/config.js';
 import { verifyUserToken, AuthenticatedRequest } from './middleware/authMiddleware.js';
+import { UserContextManager } from './utils/userContext.js';
 
 export class FeishuMcpServer {
   private connectionManager: SSEConnectionManager;
@@ -92,7 +93,30 @@ export class FeishuMcpServer {
           .send(`No active connection found for sessionId: ${sessionId}`);
         return;
       }
-      await transport.handlePostMessage(req, res);
+
+      // 从请求头中提取用户访问令牌
+      const authorization = req.headers.authorization;
+      let userAccessToken: string | undefined;
+      
+      if (authorization && authorization.startsWith('Bearer ')) {
+        userAccessToken = authorization.substring(7); // 移除 "Bearer " 前缀
+        Logger.debug(`[SSE messages] 提取到用户访问令牌: ${userAccessToken.substring(0, 20)}...`);
+      } else {
+        Logger.debug('[SSE messages] 未找到用户访问令牌');
+      }
+
+      // 使用 UserContextManager 在异步上下文中传递用户令牌
+      const userContextManager = UserContextManager.getInstance();
+      
+      await userContextManager.run(
+        { 
+          accessToken: userAccessToken,
+          userInfo: null // 可以在需要时扩展用户信息
+        },
+        async () => {
+          await transport.handlePostMessage(req, res);
+        }
+      );
     });
 
     app.get('/callback', callback);
