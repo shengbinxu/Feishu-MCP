@@ -639,7 +639,7 @@ export class FeishuApiService extends BaseApiService {
   public async getRootFolderInfo(): Promise<any> {
     try {
       const endpoint = '/drive/explorer/v2/root_folder/meta';
-      const response = await this.get(endpoint, undefined);
+      const response = await this.get(endpoint);
       Logger.debug('获取根文件夹信息成功:', response);
       return response;
     } catch (error) {
