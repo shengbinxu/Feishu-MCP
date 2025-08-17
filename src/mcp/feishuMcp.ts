@@ -124,7 +124,7 @@ export class FeishuMcp extends McpServer {
    */
   private registerFeishuBlockToolsWithCount(): number {
     const toolsBefore = this.getAllToolNames().length;
-    registerFeishuBlockTools(this, this.feishuService, this.userAccessToken, this.userInfo);
+    registerFeishuBlockTools(this, this.feishuService);
     const toolsAfter = this.getAllToolNames().length;
     return toolsAfter - toolsBefore;
   }

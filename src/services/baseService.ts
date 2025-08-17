@@ -105,9 +105,13 @@ export abstract class BaseApiService {
     responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream',
     userAccessToken?: string
   ): Promise<T> {
+    const startTime = Date.now();
+    let requestUrl = '';
+    let requestConfig: AxiosRequestConfig | undefined;
+    let requestHeadersForLog: Record<string, any> | undefined;
     try {
       // 构建请求URL
-      const url = `${this.getBaseUrl()}${endpoint}`;
+      requestUrl = `${this.getBaseUrl()}${endpoint}`;
       
       // 准备请求头
       const headers: Record<string, string> = {
@@ -139,8 +143,20 @@ export abstract class BaseApiService {
       
       // 记录请求信息
       Logger.debug('准备发送请求:');
-      Logger.debug(`请求URL: ${url}`);
+      Logger.debug(`请求URL: ${requestUrl}`);
       Logger.debug(`请求方法: ${method}`);
+      // 记录请求头（脱敏）
+      try {
+        const headersForLog: Record<string, any> = { ...headers };
+        if (typeof headersForLog['Authorization'] === 'string') {
+          headersForLog['Authorization'] = 'Bearer ***';
+        }
+        if (typeof headersForLog['authorization'] === 'string') {
+          headersForLog['authorization'] = 'Bearer ***';
+        }
+        requestHeadersForLog = headersForLog;
+        Logger.debug('请求头:', headersForLog);
+      } catch {}
       if (data) {
         Logger.debug(`请求数据:`, data);
       }
@@ -148,12 +164,13 @@ export abstract class BaseApiService {
       // 构建请求配置
       const config: AxiosRequestConfig = {
         method,
-        url,
+        url: requestUrl,
         headers,
         data: method !== 'GET' ? data : undefined,
         params: method === 'GET' ? data : undefined,
         responseType: responseType || 'json'
       };
+      requestConfig = config;
       
       // 发送请求
       const response = await axios<ApiResponse<T>>(config);
@@ -163,6 +180,12 @@ export abstract class BaseApiService {
       Logger.debug(`响应状态码: ${response.status}`);
       Logger.debug(`响应头:`, response.headers);
       Logger.debug(`响应数据:`, response.data);
+      Logger.logApiCall(method, requestUrl, method === 'GET' ? config.params : config.data, response, response.status);
+      // 附加记录请求头（脱敏后）
+      if (requestHeadersForLog) {
+        Logger.debug('请求头(确认):', requestHeadersForLog);
+      }
+      Logger.debug(`请求耗时: ${Date.now() - startTime}ms`);
       
       // 对于非JSON响应，直接返回数据
       if (responseType && responseType !== 'json') {
@@ -184,6 +207,21 @@ export abstract class BaseApiService {
       return response.data.data;
     } catch (error) {
       // 处理401错误，可能是令牌过期
+      try {
+        const axiosError = error as AxiosError;
+        const statusCode = axiosError?.response?.status ?? -1;
+        Logger.logApiCall(
+          method,
+          requestUrl || `${this.getBaseUrl()}${endpoint}`,
+          method === 'GET' ? requestConfig?.params : requestConfig?.data,
+          axiosError?.response,
+          statusCode
+        );
+        if (requestHeadersForLog) {
+          Logger.debug('请求头(失败):', requestHeadersForLog);
+        }
+        Logger.debug(`请求失败耗时: ${Date.now() - startTime}ms`);
+      } catch {}
       if (error instanceof AxiosError && error.response?.status === 401) {
         // 清除当前令牌，下次请求会重新获取
         this.accessToken = '';

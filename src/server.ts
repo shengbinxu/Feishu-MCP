@@ -107,7 +107,7 @@ export class FeishuMcpServer {
     app.get('/callback', callback);
 
     // OAuth 2.0 Dynamic Client Registration - RFC 7591
-    app.post('/register', (req: Request, res: Response) => {
+    app.post('/register', (_: Request, res: Response) => {
       Logger.log(`[OAuth Registration] Received dynamic client registration request`);
       
       const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -137,7 +137,7 @@ export class FeishuMcpServer {
         response_type = 'code',
         client_id, 
         redirect_uri, 
-        scope = 'docs:document.content:read docx:document docx:document.block:convert docx:document:create docx:document:readonly drive:drive drive:file:upload wiki:space:read wiki:space:retrieve wiki:wiki wiki:wiki:readonly offline_access drive:drive drive:drive.metadata:readonly', 
+        scope = 'docs:document.content:read docx:document docx:document.block:convert docx:document:create docx:document:readonly drive:drive drive:file:upload wiki:space:read wiki:space:retrieve wiki:wiki wiki:wiki:readonly offline_access drive:drive drive:drive.metadata:readonly drive:drive drive:drive:readonly space:document:retrieve', 
         state 
       } = req.query;
       
@@ -349,64 +349,6 @@ export class FeishuMcpServer {
         res.json({ code: 0, msg: 'success', data: tokenResult });
       } catch (e: any) {
         res.status(500).json({ code: 500, msg: e.message || '获取token失败' });
-      }
-    });
-
-    // 需要用户身份验证的API端点示例
-    app.get('/api/user/documents', verifyUserToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      try {
-        Logger.info(`[User API] User ${req.userInfo?.name} requesting documents`);
-        
-        // 使用飞书API服务，传入用户访问令牌
-        const { FeishuApiService } = await import('./services/feishuApiService.js');
-        const feishuService = FeishuApiService.getInstance();
-        
-        // 搜索用户的文档
-        const searchResult = await feishuService.searchDocuments('', 20, req.userAccessToken);
-        
-        res.json({
-          code: 0,
-          msg: 'success',
-          data: {
-            user: req.userInfo,
-            documents: searchResult.data
-          }
-        });
-      } catch (error: any) {
-        Logger.error(`[User API] Error fetching user documents:`, error);
-        res.status(500).json({
-          code: 500,
-          msg: '获取用户文档失败',
-          error: error.message
-        });
-      }
-    });
-
-    app.get('/api/user/folders', verifyUserToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      try {
-        Logger.info(`[User API] User ${req.userInfo?.name} requesting root folder info`);
-        
-        const { FeishuApiService } = await import('./services/feishuApiService.js');
-        const feishuService = FeishuApiService.getInstance();
-        
-        // 获取用户的根文件夹信息
-        const rootFolder = await feishuService.getRootFolderInfo(req.userAccessToken);
-        
-        res.json({
-          code: 0,
-          msg: 'success',
-          data: {
-            user: req.userInfo,
-            rootFolder: rootFolder
-          }
-        });
-      } catch (error: any) {
-        Logger.error(`[User API] Error fetching user folder info:`, error);
-        res.status(500).json({
-          code: 500,
-          msg: '获取用户文件夹信息失败',
-          error: error.message
-        });
       }
     });
 
