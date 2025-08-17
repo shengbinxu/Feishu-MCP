@@ -26,10 +26,10 @@ export class FeishuMcp extends McpServer {
    */
   constructor() {
     super(serverInfo,serverOptions);
-
+    
     // 初始化飞书服务
     this.initFeishuService();
-
+    
     // 注册所有工具
     if (this.feishuService) {
       this.registerAllTools();
@@ -60,10 +60,10 @@ export class FeishuMcp extends McpServer {
     if (!this.feishuService) {
       return;
     }
-
+    
     // 注册所有工具
     registerFeishuTools(this, this.feishuService);
     registerFeishuBlockTools(this, this.feishuService);
     registerFeishuFolderTools(this, this.feishuService);
   }
-}
+} 

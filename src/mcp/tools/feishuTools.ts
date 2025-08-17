@@ -16,8 +16,6 @@ import {
  * 注册飞书相关的MCP工具
  * @param server MCP服务器实例
  * @param feishuService 飞书API服务实例
- * @param userAccessToken 用户访问令牌（可选）
- * @param userInfo 用户信息（可选）
  */
 export function registerFeishuTools(server: McpServer, feishuService: FeishuApiService | null): void {
   // 添加创建飞书文档工具
@@ -30,7 +28,7 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
     },
     async ({ title, folderToken }) => {
       try {
-        Logger.info(`开始创建飞书文档，标题: ${title}${folderToken ? `，文件夹Token: ${folderToken}` : '，使用默认文件夹'} (用户: ${userInfo?.name || '未知'})`);
+        Logger.info(`开始创建飞书文档，标题: ${title}${folderToken ? `，文件夹Token: ${folderToken}` : '，使用默认文件夹'}`);
         const newDoc = await feishuService?.createDocument(title, folderToken);
         if (!newDoc) {
           throw new Error('创建文档失败，未返回文档信息');
@@ -215,9 +213,9 @@ export function registerFeishuTools(server: McpServer, feishuService: FeishuApiS
           };
         }
 
-        Logger.info(`开始搜索飞书文档，关键字: ${searchKey} (用户: ${userInfo?.name || '未知'})`);
+        Logger.info(`开始搜索飞书文档，关键字: ${searchKey},`);
         const searchResult = await feishuService.searchDocuments(searchKey);
-        Logger.info(`文档搜索完成，找到 ${searchResult.data?.length || 0} 个结果`);
+        Logger.info(`文档搜索完成，找到 ${searchResult.size} 个结果`);
         return {
           content: [
             { type: 'text', text: JSON.stringify(searchResult, null, 2) },

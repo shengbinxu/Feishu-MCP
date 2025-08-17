@@ -28,8 +28,6 @@ import {
  * 注册飞书块相关的MCP工具
  * @param server MCP服务器实例
  * @param feishuService 飞书API服务实例
- * @param userAccessToken 用户访问令牌（可选）
- * @param userInfo 用户信息（可选）
  */
 export function registerFeishuBlockTools(server: McpServer, feishuService: FeishuApiService | null): void {
   // 添加更新块文本内容工具
