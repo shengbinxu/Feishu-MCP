@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { Logger } from './utils/logger.js';
 import { SSEConnectionManager } from './manager/sseConnectionManager.js';
 import { FeishuMcp } from './mcp/feishuMcp.js';
@@ -40,12 +39,6 @@ export class FeishuMcpServer {
     app.get('/sse', verifyUserToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       let sseTransport: SSEServerTransport | null = null;
       try {
-        // 确保响应头正确设置
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
         
         sseTransport = new SSEServerTransport('/messages', res);
         const sessionId = sseTransport.sessionId;
@@ -64,12 +57,10 @@ export class FeishuMcpServer {
         
         this.connectionManager.addConnection(sessionId, sseTransport, req, res);
         
-        const tempServer = new FeishuMcp(req.userAccessToken, req.userInfo);
-        const toolCount = tempServer.getToolCount();
-        Logger.info(`[SSE Connection] MCP服务器创建成功，已注册 ${toolCount} 个工具`);
-        
+        const tempServer = new FeishuMcp();
         // 直接连接MCP服务器到SSE传输层，不使用包装的connect方法
         await tempServer.connect(sseTransport);
+
         Logger.info(`[SSE Connection] Successfully connected transport for: ${sessionId}`);
       } catch (error: any) {
         Logger.error(`[SSE Connection] Error in SSE endpoint:`, error);
