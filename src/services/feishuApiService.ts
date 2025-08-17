@@ -138,7 +138,7 @@ export class FeishuApiService extends BaseApiService {
     try {
       const normalizedDocId = ParamUtils.processDocumentId(documentId);
       const endpoint = `/docx/v1/documents/${normalizedDocId}`;
-      const response = await this.get(endpoint, undefined, true);
+      const response = await this.get(endpoint);
       return response;
     } catch (error) {
       this.handleApiError(error, '获取文档信息失败');
@@ -169,7 +169,7 @@ export class FeishuApiService extends BaseApiService {
           params.page_token = pageToken;
         }
 
-        const response = await this.get(endpoint, params, true);
+        const response = await this.get(endpoint, params);
         const blocks = response.items || [];
 
         allBlocks = [...allBlocks, ...blocks];
@@ -639,7 +639,7 @@ export class FeishuApiService extends BaseApiService {
   public async getRootFolderInfo(): Promise<any> {
     try {
       const endpoint = '/drive/explorer/v2/root_folder/meta';
-      const response = await this.get(endpoint, undefined, true);
+      const response = await this.get(endpoint, undefined);
       Logger.debug('获取根文件夹信息成功:', response);
       return response;
     } catch (error) {
@@ -724,7 +724,7 @@ export class FeishuApiService extends BaseApiService {
         };
 
         Logger.debug(`请求搜索，offset: ${offset}, count: ${count}`);
-        const response = await this.post(endpoint, payload, true);
+        const response = await this.post(endpoint, payload);
         
         Logger.debug('搜索响应:', JSON.stringify(response, null, 2));
 
