@@ -72,7 +72,7 @@ export class FeishuApiService extends BaseApiService {
       const userAccessToken = userContextManager.getUserAccessToken();
       
       if (userAccessToken) {
-        Logger.debug('使用用户访问令牌');
+        Logger.debug(`使用用户访问令牌: ${userAccessToken.substring(0, 20)}...`);
         return userAccessToken;
       }
       
