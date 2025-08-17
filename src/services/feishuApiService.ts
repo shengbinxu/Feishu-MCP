@@ -62,6 +62,18 @@ export class FeishuApiService extends BaseApiService {
    * @throws 如果获取令牌失败则抛出错误
    */
   protected async getAccessToken(): Promise<string> {
+    // 通过HTTP请求调用配置的tokenEndpoint接口
+    const { appId, appSecret, authType, tokenEndpoint } = this.config.feishu;
+
+    if (authType === 'user') {
+      // 读取http header中的access_token
+      const accessToken = this.getAccessTokenFromHeader();
+      if (accessToken) {
+        return accessToken;
+      }
+      throw new Error('无法获取有效的access_token');
+    }
+
     // 尝试从缓存获取
     const cachedToken = this.cacheManager.getToken();
     if (cachedToken) {
@@ -69,8 +81,6 @@ export class FeishuApiService extends BaseApiService {
       return cachedToken;
     }
 
-    // 通过HTTP请求调用配置的tokenEndpoint接口
-    const { appId, appSecret, authType, tokenEndpoint } = this.config.feishu;
     const params = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,

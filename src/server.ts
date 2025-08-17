@@ -15,20 +15,20 @@ export class FeishuMcpServer {
     this.connectionManager = new SSEConnectionManager();
   }
 
-  async connect(transport: Transport, userAccessToken?: string, userInfo?: any): Promise<void> {
-    Logger.info('connect');
-    const server = new FeishuMcp(userAccessToken, userInfo);
-    await server.connect(transport);
-
-    Logger.info = (...args: any[]) => {
-      server.server.sendLoggingMessage({ level: 'info', data: args });
-    };
-    Logger.error = (...args: any[]) => {
-      server.server.sendLoggingMessage({ level: 'error', data: args });
-    };
-
-    Logger.info('Server connected and ready to process requests');
-  }
+  // async connect(transport: Transport, userAccessToken?: string, userInfo?: any): Promise<void> {
+  //   Logger.info('connect');
+  //   const server = new FeishuMcp(userAccessToken, userInfo);
+  //   await server.connect(transport);
+  //
+  //   Logger.info = (...args: any[]) => {
+  //     server.server.sendLoggingMessage({ level: 'info', data: args });
+  //   };
+  //   Logger.error = (...args: any[]) => {
+  //     server.server.sendLoggingMessage({ level: 'error', data: args });
+  //   };
+  //
+  //   Logger.info('Server connected and ready to process requests');
+  // }
 
   async startHttpServer(port: number): Promise<void> {
     const app = express();

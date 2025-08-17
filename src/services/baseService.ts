@@ -93,7 +93,6 @@ export abstract class BaseApiService {
    * @param needsAuth 是否需要认证
    * @param additionalHeaders 附加请求头
    * @param responseType 响应类型
-   * @param userAccessToken 用户访问令牌（如果提供，将使用用户令牌而非应用令牌）
    * @returns 响应数据
    */
   protected async request<T = any>(
@@ -103,7 +102,6 @@ export abstract class BaseApiService {
     needsAuth: boolean = true,
     additionalHeaders?: Record<string, string>,
     responseType?: 'json' | 'arraybuffer' | 'blob' | 'document' | 'text' | 'stream',
-    userAccessToken?: string
   ): Promise<T> {
     const startTime = Date.now();
     let requestUrl = '';
@@ -128,16 +126,7 @@ export abstract class BaseApiService {
       
       // 添加认证令牌
       if (needsAuth) {
-        let accessToken: string;
-        if (userAccessToken) {
-          // 使用用户访问令牌
-          accessToken = userAccessToken;
-          Logger.debug('使用用户访问令牌进行API调用');
-        } else {
-          // 使用应用访问令牌
-          accessToken = await this.getAccessToken();
-          Logger.debug('使用应用访问令牌进行API调用');
-        }
+        const accessToken = await this.getAccessToken();
         headers['Authorization'] = `Bearer ${accessToken}`;
       }
       
