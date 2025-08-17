@@ -3,7 +3,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { Logger } from './utils/logger.js';
 import { SSEConnectionManager } from './manager/sseConnectionManager.js';
 import { FeishuMcp } from './mcp/feishuMcp.js';
-import { callback, getTokenByParams } from './services/callbackService.js';
+import { callback } from './services/callbackService.js';
 import { Config } from './utils/config.js';
 import { verifyUserToken, AuthenticatedRequest } from './middleware/authMiddleware.js';
 import { UserContextManager } from './utils/userContext.js';
@@ -108,15 +108,41 @@ export class FeishuMcpServer {
       // 使用 UserContextManager 在异步上下文中传递用户令牌
       const userContextManager = UserContextManager.getInstance();
       
-      await userContextManager.run(
-        { 
-          accessToken: userAccessToken,
-          userInfo: null // 可以在需要时扩展用户信息
-        },
-        async () => {
-          await transport.handlePostMessage(req, res);
+      try {
+        await userContextManager.run(
+          { 
+            accessToken: userAccessToken,
+            userInfo: null // 可以在需要时扩展用户信息
+          },
+          async () => {
+            await transport.handlePostMessage(req, res);
+          }
+        );
+      } catch (error: any) {
+        Logger.error(`[SSE messages] Error handling message for sessionId ${sessionId}:`, error);
+        
+        // 检查是否是401错误（用户令牌过期）
+        if (error && error.status === 401) {
+          Logger.warn(`[SSE messages] User access token expired for sessionId ${sessionId}`);
+          if (!res.writableEnded) {
+            res.status(401).json({
+              error: 'invalid_token',
+              error_description: 'User access token is invalid or expired. Please refresh your token.',
+              details: error.err || 'Token validation failed'
+            });
+          }
+          return;
         }
-      );
+        
+        // 处理其他错误
+        if (!res.writableEnded) {
+          res.status(500).json({
+            error: 'server_error',
+            error_description: 'Internal server error while processing message.',
+            details: error.message || 'Unknown error'
+          });
+        }
+      }
     });
 
     app.get('/callback', callback);
@@ -152,7 +178,9 @@ export class FeishuMcpServer {
         response_type = 'code',
         client_id, 
         redirect_uri, 
-        scope = 'docs:document.content:read docx:document docx:document.block:convert docx:document:create docx:document:readonly drive:drive drive:file:upload wiki:space:read wiki:space:retrieve wiki:wiki wiki:wiki:readonly offline_access drive:drive drive:drive.metadata:readonly drive:drive drive:drive:readonly space:document:retrieve', 
+        scope = 'docs:document.content:read docx:document docx:document.block:convert docx:document:create docx:document:readonly' +
+            ' drive:drive drive:file:upload wiki:space:read wiki:space:retrieve wiki:wiki wiki:wiki:readonly ' +
+            'offline_access drive:drive drive:drive.metadata:readonly drive:drive drive:drive:readonly space:document:retrieve',
         state 
       } = req.query;
       
@@ -221,7 +249,7 @@ export class FeishuMcpServer {
       try {
         // 解码state获取原始参数
         const stateData = JSON.parse(Buffer.from(state as string, 'base64').toString());
-        const { original_redirect_uri, original_state, client_id } = stateData;
+        const { original_redirect_uri, original_state } = stateData;
         
         Logger.info(`[Feishu OAuth Callback] Decoded state - original_redirect_uri: ${original_redirect_uri}`);
         
@@ -248,19 +276,35 @@ export class FeishuMcpServer {
       Logger.log(`[Feishu OAuth Token] Received token request body: ${JSON.stringify(req.body)}`);
       Logger.log(`[Feishu OAuth Token] Content-Type: ${req.get('Content-Type')}`);
       
-      const { grant_type, code, code_verifier, redirect_uri } = req.body;
+      const { grant_type, code, refresh_token } = req.body;
       
-      if (grant_type !== 'authorization_code') {
+      // 验证grant_type
+      if (!grant_type) {
         return res.status(400).json({
-          error: 'unsupported_grant_type',
-          error_description: 'Only authorization_code grant type is supported'
+          error: 'invalid_request',
+          error_description: 'Missing grant_type parameter'
         });
       }
       
-      if (!code) {
+      if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
+        return res.status(400).json({
+          error: 'unsupported_grant_type',
+          error_description: 'Only authorization_code and refresh_token grant types are supported'
+        });
+      }
+      
+      // 根据grant_type验证必需参数
+      if (grant_type === 'authorization_code' && !code) {
         return res.status(400).json({
           error: 'invalid_request',
-          error_description: 'Missing authorization code'
+          error_description: 'Missing authorization code for authorization_code grant'
+        });
+      }
+      
+      if (grant_type === 'refresh_token' && !refresh_token) {
+        return res.status(400).json({
+          error: 'invalid_request',
+          error_description: 'Missing refresh_token for refresh_token grant'
         });
       }
       
@@ -277,18 +321,34 @@ export class FeishuMcpServer {
           });
         }
         
-        // 使用授权码换取飞书用户访问令牌
-        // 注意: 必须使用与授权时相同的redirect_uri (即我们服务器的回调地址)
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
+        let tokenRequestBody: any;
+        let feishuApiUrl: string;
         
-        const tokenRequestBody = {
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: ourCallbackUrl  // 使用我们服务器的回调地址，与授权时一致
-        };
+        if (grant_type === 'authorization_code') {
+          // 使用授权码换取飞书用户访问令牌
+          const baseUrl = `${req.protocol}://${req.get('host')}`;
+          const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
+          
+          tokenRequestBody = {
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: ourCallbackUrl
+          };
+          feishuApiUrl = 'https://open.feishu.cn/open-apis/authen/v1/oidc/access_token';
+          
+        } else {
+          // grant_type === 'refresh_token'
+          // 使用refresh_token刷新访问令牌
+          tokenRequestBody = {
+            grant_type: 'refresh_token',
+            refresh_token: refresh_token
+          };
+          feishuApiUrl = 'https://open.feishu.cn/open-apis/authen/v1/oidc/refresh_access_token';
+        }
         
-        const tokenResponse = await fetch('https://open.feishu.cn/open-apis/authen/v1/oidc/access_token', {
+        Logger.info(`[Feishu OAuth Token] Making ${grant_type} request to Feishu API`);
+        
+        const tokenResponse = await fetch(feishuApiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -301,7 +361,7 @@ export class FeishuMcpServer {
         
         if (tokenData.code === 0) {
           // 成功获取飞书用户令牌
-          Logger.info(`[Feishu OAuth Token] Successfully obtained user access token`);
+          Logger.info(`[Feishu OAuth Token] Successfully obtained user access token via ${grant_type}`);
           
           const response = {
             access_token: tokenData.data.access_token,
@@ -310,20 +370,31 @@ export class FeishuMcpServer {
             refresh_token: tokenData.data.refresh_token,
             scope: tokenData.data.scope || 'email:readonly'
           };
-          
-                     return res.json(response);
+          return res.json(response);
          } else {
-           Logger.error(`[Feishu OAuth Token] Failed to obtain access token: ${JSON.stringify(tokenData)}`);
+           Logger.error(`[Feishu OAuth Token] Failed to obtain access token via ${grant_type}: ${JSON.stringify(tokenData)}`);
+           
+           // 根据不同的错误类型返回相应的OAuth错误
+           let oauthError = 'invalid_grant';
+           if (grant_type === 'refresh_token') {
+             // refresh_token相关的常见错误
+             if (tokenData.msg && tokenData.msg.includes('expired')) {
+               oauthError = 'invalid_grant'; // refresh_token已过期
+             } else if (tokenData.msg && tokenData.msg.includes('invalid')) {
+               oauthError = 'invalid_grant'; // refresh_token无效
+             }
+           }
+           
            return res.status(400).json({
-             error: 'invalid_grant',
+             error: oauthError,
              error_description: `Feishu API error: ${tokenData.msg || 'Unknown error'}`
            });
          }
        } catch (error) {
-         Logger.error(`[Feishu OAuth Token] Error during token exchange:`, error);
+         Logger.error(`[Feishu OAuth Token] Error during ${grant_type} token exchange:`, error);
          return res.status(500).json({
            error: 'server_error',
-           error_description: 'Failed to exchange authorization code for access token'
+           error_description: `Failed to ${grant_type === 'refresh_token' ? 'refresh access token' : 'exchange authorization code for access token'}`
          });
        }
     });
@@ -349,23 +420,23 @@ export class FeishuMcpServer {
       }
     }
 
-    app.get('/getToken', async (req: Request, res: Response) => {
-      const { client_id, client_secret, token_type } = req.query;
-      if (!client_id || !client_secret) {
-        res.status(400).json({ code: 400, msg: '缺少 client_id 或 client_secret' });
-        return;
-      }
-      try {
-        const tokenResult = await getTokenByParams({
-          client_id: client_id as string,
-          client_secret: client_secret as string,
-          token_type: token_type as string
-        });
-        res.json({ code: 0, msg: 'success', data: tokenResult });
-      } catch (e: any) {
-        res.status(500).json({ code: 500, msg: e.message || '获取token失败' });
-      }
-    });
+    // app.get('/getToken', async (req: Request, res: Response) => {
+    //   const { client_id, client_secret, token_type } = req.query;
+    //   if (!client_id || !client_secret) {
+    //     res.status(400).json({ code: 400, msg: '缺少 client_id 或 client_secret' });
+    //     return;
+    //   }
+    //   try {
+    //     const tokenResult = await getTokenByParams({
+    //       client_id: client_id as string,
+    //       client_secret: client_secret as string,
+    //       token_type: token_type as string
+    //     });
+    //     res.json({ code: 0, msg: 'success', data: tokenResult });
+    //   } catch (e: any) {
+    //     res.status(500).json({ code: 500, msg: e.message || '获取token失败' });
+    //   }
+    // });
 
     // OAuth 2.0 Authorization Server Metadata - RFC 8414
     app.get('/.well-known/oauth-authorization-server', (req: Request, res: Response) => {

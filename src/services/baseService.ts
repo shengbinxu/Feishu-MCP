@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import FormData from 'form-data';
 import { Logger } from '../utils/logger.js';
 import { formatErrorMessage } from '../utils/error.js';
+import { Config } from '../utils/config.js';
 
 /**
  * API请求错误接口
@@ -212,10 +213,30 @@ export abstract class BaseApiService {
         Logger.debug(`请求失败耗时: ${Date.now() - startTime}ms`);
       } catch {}
       if (error instanceof AxiosError && error.response?.status === 401) {
-        // 清除当前令牌，下次请求会重新获取
+        // 检查是否是用户令牌认证模式
+        const config = Config.getInstance();
+        const isUserAuth = config.feishu.authType === 'user';
+        
+        if (isUserAuth) {
+          // 用户令牌过期，不进行重试，直接抛出401错误
+          Logger.warn('用户访问令牌无效或已过期');
+          const apiError: ApiError = {
+            status: 401,
+            err: '用户访问令牌无效或已过期，请重新获取令牌',
+            apiError: {
+              code: 99991663,
+              msg: 'token invalid',
+              error: 'user_token_expired'
+            },
+            logId: error.response?.data?.log_id
+          };
+          throw apiError;
+        }
+        
+        // 租户令牌过期处理 - 清除缓存并重试
         this.accessToken = '';
         this.tokenExpireTime = null;
-        Logger.warn('访问令牌可能已过期，已清除缓存的令牌');
+        Logger.warn('租户访问令牌可能已过期，已清除缓存的令牌');
         
         // 如果这是重试请求，避免无限循环
         if ((error as any).isRetry) {
