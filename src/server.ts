@@ -407,8 +407,6 @@ export class FeishuMcpServer {
       Logger.info(`OAuth Token endpoint available at http://localhost:${port}/token`);
       Logger.info(`OAuth Registration endpoint available at http://localhost:${port}/register`);
       Logger.info(`OAuth Discovery endpoint available at http://localhost:${port}/.well-known/oauth-authorization-server`);
-      Logger.info(`User Documents API available at http://localhost:${port}/api/user/documents`);
-      Logger.info(`User Folders API available at http://localhost:${port}/api/user/folders`);
     });
   }
 }

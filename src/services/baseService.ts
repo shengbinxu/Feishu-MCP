@@ -243,11 +243,10 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param params 请求参数
    * @param needsAuth 是否需要认证
-   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async get<T = any>(endpoint: string, params?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
-    return this.request<T>(endpoint, 'GET', params, needsAuth, undefined, 'json', userAccessToken);
+  protected async get<T = any>(endpoint: string, params?: any, needsAuth: boolean = true): Promise<T> {
+    return this.request<T>(endpoint, 'GET', params, needsAuth, undefined, 'json');
   }
   
   /**
@@ -255,11 +254,10 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param data 请求数据
    * @param needsAuth 是否需要认证
-   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async post<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
-    return this.request<T>(endpoint, 'POST', data, needsAuth, undefined, 'json', userAccessToken);
+  protected async post<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
+    return this.request<T>(endpoint, 'POST', data, needsAuth, undefined, 'json');
   }
   
   /**
@@ -267,11 +265,10 @@ export abstract class BaseApiService {
    * @param endpoint 请求端点
    * @param data 请求数据
    * @param needsAuth 是否需要认证
-   * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async put<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
-    return this.request<T>(endpoint, 'PUT', data, needsAuth, undefined, 'json', userAccessToken);
+  protected async put<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
+    return this.request<T>(endpoint, 'PUT', data, needsAuth, undefined, 'json');
   }
   
   /**
@@ -282,8 +279,8 @@ export abstract class BaseApiService {
    * @param userAccessToken 用户访问令牌
    * @returns 响应数据
    */
-  protected async patch<T = any>(endpoint: string, data?: any, needsAuth: boolean = true, userAccessToken?: string): Promise<T> {
-    return this.request<T>(endpoint, 'PATCH', data, needsAuth, undefined, 'json', userAccessToken);
+  protected async patch<T = any>(endpoint: string, data?: any, needsAuth: boolean = true): Promise<T> {
+    return this.request<T>(endpoint, 'PATCH', data, needsAuth, undefined, 'json');
   }
   
   /**
