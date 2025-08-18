@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { Logger } from './utils/logger.js';
 import { SSEConnectionManager } from './manager/sseConnectionManager.js';
 import { FeishuMcp } from './mcp/feishuMcp.js';
@@ -15,20 +16,20 @@ export class FeishuMcpServer {
     this.connectionManager = new SSEConnectionManager();
   }
 
-  // async connect(transport: Transport, userAccessToken?: string, userInfo?: any): Promise<void> {
-  //   Logger.info('connect');
-  //   const server = new FeishuMcp(userAccessToken, userInfo);
-  //   await server.connect(transport);
-  //
-  //   Logger.info = (...args: any[]) => {
-  //     server.server.sendLoggingMessage({ level: 'info', data: args });
-  //   };
-  //   Logger.error = (...args: any[]) => {
-  //     server.server.sendLoggingMessage({ level: 'error', data: args });
-  //   };
-  //
-  //   Logger.info('Server connected and ready to process requests');
-  // }
+  async connect(transport: Transport): Promise<void> {
+    Logger.info('connect');
+    const server = new FeishuMcp();
+    await server.connect(transport);
+  
+    Logger.info = (...args: any[]) => {
+      server.server.sendLoggingMessage({ level: 'info', data: args });
+    };
+    Logger.error = (...args: any[]) => {
+      server.server.sendLoggingMessage({ level: 'error', data: args });
+    };
+  
+    Logger.info('Server connected and ready to process requests');
+  }
 
   async startHttpServer(port: number): Promise<void> {
     const app = express();
@@ -186,10 +187,11 @@ export class FeishuMcpServer {
       
       // 验证必需参数
       if (!redirect_uri) {
-        return res.status(400).json({ 
+         res.status(400).json({
           error: 'invalid_request', 
           error_description: 'Missing redirect_uri parameter' 
         });
+        return;
       }
       
       // 获取飞书配置
@@ -197,10 +199,12 @@ export class FeishuMcpServer {
       const feishuAppId = config.feishu.appId;
       
       if (!feishuAppId) {
-        return res.status(500).json({ 
+         res.status(500).json({
           error: 'server_error', 
           error_description: 'Feishu app_id not configured' 
         });
+        return;
+
       }
       
       // 构造本服务器的回调地址 (飞书将回调到这里)
@@ -237,13 +241,15 @@ export class FeishuMcpServer {
       // 处理授权错误
       if (error) {
         Logger.error(`[Feishu OAuth Callback] Authorization error: ${error}`);
-        return res.status(400).send(`授权失败: ${error}`);
+        res.status(400).send(`授权失败: ${error}`);
+        return;
       }
       
       // 验证必需参数
       if (!code || !state) {
         Logger.error(`[Feishu OAuth Callback] Missing required parameters: code=${code}, state=${state}`);
-        return res.status(400).send('缺少必需参数');
+        res.status(400).send('缺少必需参数');
+        return;
       }
       
       try {
@@ -262,11 +268,13 @@ export class FeishuMcpServer {
         }
         
         Logger.info(`[Feishu OAuth Callback] Final redirect to: ${finalRedirectUrl.toString()}`);
-        return res.redirect(finalRedirectUrl.toString());
+        res.redirect(finalRedirectUrl.toString());
+        return;
         
       } catch (error) {
         Logger.error(`[Feishu OAuth Callback] Error decoding state:`, error);
-        return res.status(400).send('状态参数解码失败');
+        res.status(400).send('状态参数解码失败');
+        return;
       }
     });
 
@@ -280,32 +288,36 @@ export class FeishuMcpServer {
       
       // 验证grant_type
       if (!grant_type) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
           error_description: 'Missing grant_type parameter'
         });
+        return;
       }
       
       if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'unsupported_grant_type',
           error_description: 'Only authorization_code and refresh_token grant types are supported'
         });
+        return;
       }
       
       // 根据grant_type验证必需参数
       if (grant_type === 'authorization_code' && !code) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
           error_description: 'Missing authorization code for authorization_code grant'
         });
+        return;
       }
       
       if (grant_type === 'refresh_token' && !refresh_token) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
           error_description: 'Missing refresh_token for refresh_token grant'
         });
+        return;
       }
       
       try {
@@ -315,10 +327,11 @@ export class FeishuMcpServer {
         const feishuAppSecret = config.feishu.appSecret;
         
         if (!feishuAppId || !feishuAppSecret) {
-          return res.status(500).json({
+          res.status(500).json({
             error: 'server_error',
             error_description: 'Feishu configuration incomplete'
           });
+          return;
         }
         
         let tokenRequestBody: any;
@@ -370,7 +383,8 @@ export class FeishuMcpServer {
             refresh_token: tokenData.data.refresh_token,
             scope: tokenData.data.scope || 'email:readonly'
           };
-          return res.json(response);
+          res.json(response);
+          return;
          } else {
            Logger.error(`[Feishu OAuth Token] Failed to obtain access token via ${grant_type}: ${JSON.stringify(tokenData)}`);
            
@@ -385,17 +399,19 @@ export class FeishuMcpServer {
              }
            }
            
-           return res.status(400).json({
+           res.status(400).json({
              error: oauthError,
              error_description: `Feishu API error: ${tokenData.msg || 'Unknown error'}`
            });
+          return;
          }
        } catch (error) {
          Logger.error(`[Feishu OAuth Token] Error during ${grant_type} token exchange:`, error);
-         return res.status(500).json({
+         res.status(500).json({
            error: 'server_error',
            error_description: `Failed to ${grant_type === 'refresh_token' ? 'refresh access token' : 'exchange authorization code for access token'}`
          });
+        return;
        }
     });
 
