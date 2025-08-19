@@ -16,6 +16,23 @@ export class FeishuMcpServer {
     this.connectionManager = new SSEConnectionManager();
   }
 
+  /**
+   * 获取正确的协议
+   * @param req Express请求对象
+   * @returns 协议字符串 (http 或 https)
+   */
+  private getProtocol(req: Request): string {
+    const config = Config.getInstance();
+    
+    // 如果是生产环境，强制使用HTTPS
+    if (config.server.env === 'prod') {
+      return 'https';
+    }
+    
+    // 否则检查X-Forwarded-Proto头，如果没有则使用req.protocol
+    return req.get('X-Forwarded-Proto') || req.protocol;
+  }
+
   async connect(transport: Transport): Promise<void> {
     Logger.info('connect');
     const server = new FeishuMcp();
@@ -155,9 +172,9 @@ export class FeishuMcpServer {
       const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const clientSecret = `secret_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
       
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol;
-      const host = req.get('X-Forwarded-Host') || req.get('host');
-      const baseUrl = `${protocol}://${host}`;
+             const protocol = this.getProtocol(req);
+       const host = req.get('X-Forwarded-Host') || req.get('host');
+       const baseUrl = `${protocol}://${host}`;
 
       const registrationResponse = {
         client_id: clientId,
@@ -211,11 +228,11 @@ export class FeishuMcpServer {
 
       }
       
-      // 构造本服务器的回调地址 (飞书将回调到这里)
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol;
-      const host = req.get('X-Forwarded-Host') || req.get('host');
-      const baseUrl = `${protocol}://${host}`;
-      const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
+             // 构造本服务器的回调地址 (飞书将回调到这里)
+       const protocol = this.getProtocol(req);
+       const host = req.get('X-Forwarded-Host') || req.get('host');
+       const baseUrl = `${protocol}://${host}`;
+       const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
       
       // 将原始的redirect_uri和其他参数编码到state中
       const stateData = {
@@ -343,12 +360,12 @@ export class FeishuMcpServer {
         let tokenRequestBody: any;
         let feishuApiUrl: string;
         
-        if (grant_type === 'authorization_code') {
-          // 使用授权码换取飞书用户访问令牌
-          const protocol = req.get('X-Forwarded-Proto') || req.protocol;
-          const host = req.get('X-Forwarded-Host') || req.get('host');
-          const baseUrl = `${protocol}://${host}`;
-          const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
+                 if (grant_type === 'authorization_code') {
+           // 使用授权码换取飞书用户访问令牌
+           const protocol = this.getProtocol(req);
+           const host = req.get('X-Forwarded-Host') || req.get('host');
+           const baseUrl = `${protocol}://${host}`;
+           const ourCallbackUrl = `${baseUrl}/oauth/feishu/callback`;
           
           tokenRequestBody = {
             grant_type: 'authorization_code',
@@ -462,13 +479,13 @@ export class FeishuMcpServer {
     //   }
     // });
 
-    // OAuth 2.0 Authorization Server Metadata - RFC 8414
-    app.get('/.well-known/oauth-authorization-server', (req: Request, res: Response) => {
-      Logger.log(`[OAuth Discovery] Received request for authorization server metadata`);
-      // 检查X-Forwarded-Proto头来正确获取协议
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol;
-      const host = req.get('X-Forwarded-Host') || req.get('host');
-      const baseUrl = `${protocol}://${host}`;
+         // OAuth 2.0 Authorization Server Metadata - RFC 8414
+     app.get('/.well-known/oauth-authorization-server', (req: Request, res: Response) => {
+       Logger.log(`[OAuth Discovery] Received request for authorization server metadata`);
+       // 检查X-Forwarded-Proto头来正确获取协议
+       const protocol = this.getProtocol(req);
+       const host = req.get('X-Forwarded-Host') || req.get('host');
+       const baseUrl = `${protocol}://${host}`;
       
       const metadata = {
         issuer: baseUrl,
@@ -502,13 +519,13 @@ export class FeishuMcpServer {
       res.json(metadata);
     });
 
-    // OAuth 2.0 Protected Resource Metadata - RFC 8707
-    app.get('/.well-known/oauth-protected-resource', (req: Request, res: Response) => {
-      Logger.log(`[OAuth Discovery] Received request for protected resource metadata`);
-      // 检查X-Forwarded-Proto头来正确获取协议
-      const protocol = req.get('X-Forwarded-Proto') || req.protocol;
-      const host = req.get('X-Forwarded-Host') || req.get('host');
-      const baseUrl = `${protocol}://${host}`;
+         // OAuth 2.0 Protected Resource Metadata - RFC 8707
+     app.get('/.well-known/oauth-protected-resource', (req: Request, res: Response) => {
+       Logger.log(`[OAuth Discovery] Received request for protected resource metadata`);
+       // 检查X-Forwarded-Proto头来正确获取协议
+       const protocol = this.getProtocol(req);
+       const host = req.get('X-Forwarded-Host') || req.get('host');
+       const baseUrl = `${protocol}://${host}`;
       
       const metadata = {
         resource: baseUrl,

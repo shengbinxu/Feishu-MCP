@@ -261,3 +261,6 @@ npx feishu-mcp@latest --feishu-app-id=<你的飞书应用ID> --feishu-app-secret
 ```
 pm2 start /usr/bin/bash --name feishu-mcp-auth -- -c "pnpm run dev"
 ```
+
+生产环境日志文件：/root/.pm2/logs
+
